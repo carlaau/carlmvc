@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project ver="10" name="carlmvc" libEmbed="true" icon="..." ui="website" output="carlmvc.exe" CompanyName="aardio.org" FileDescription="carlmvc" LegalCopyright="Copyright (C) carl 2016" ProductName="carlmvc" InternalName="carlmvc" FileVersion="0.0.0.1" ProductVersion="0.0.0.1" publishDir="/Publish/" dstrip="false">
+	<file name="main" path="main.aardio" comment="启动程序代码"/>
+	<folder name="application" path="application" comment="application" embed="false">
+		<folder name="common" path="application\common" comment="application\common" embed="false">
+			<file name="function.aardio" path="application\common\function.aardio" comment="application\common\function.aardio"/>
+		</folder>
+		<folder name="filters" path="application\filters" comment="application\filters">
+			<file name="mvcapp.aardio" path="application\filters\mvcapp.aardio" comment="application\filters\mvcapp.aardio"/>
+		</folder>
+		<folder name="mvc" path="application\mvc" comment="application\mvc" embed="false">
+			<folder name="controller" path="application\mvc\controller" comment="application\mvc\controller">
+				<file name="defaultCtl.aardio" path="application\mvc\controller\defaultCtl.aardio" comment="application\mvc\controller\defaultCtl.aardio"/>
+				<file name="rpcCtl.aardio" path="application\mvc\controller\rpcCtl.aardio" comment="application\mvc\controller\rpcCtl.aardio"/>
+			</folder>
+			<folder name="view" path="application\mvc\view" comment="application\mvc\view">
+				<folder name="default" path="application\mvc\view\default" comment="application\mvc\view\default">
+					<file name="index.aardio" path="application\mvc\view\default\index.aardio" comment="application\mvc\view\default\index.aardio"/>
+				</folder>
+			</folder>
+		</folder>
+	</folder>
+	<folder name="carlmvc" path="carlmvc" comment="carlmvc" embed="false">
+		<file name="base.aardio" path="carlmvc\base.aardio" comment="carlmvc\base.aardio"/>
+		<file name="config.aardio" path="carlmvc\config.aardio" comment="carlmvc\config.aardio"/>
+		<file name="start.aardio" path="carlmvc\start.aardio" comment="carlmvc\start.aardio"/>
+		<file name="version.aardio" path="carlmvc\version.aardio" comment="carlmvc\version.aardio"/>
+	</folder>
+	<folder name="config" path="config" comment="config" embed="false">
+		<file name="database.aardio" path="config\database.aardio" comment="config\database.aardio"/>
+		<file name="mvcconfig.aardio" path="config\mvcconfig.aardio" comment="config\mvcconfig.aardio"/>
+		<file name="rpcconfig.aardio" path="config\rpcconfig.aardio" comment="config\rpcconfig.aardio"/>
+		<file name="webconfig.aardio" path="config\webconfig.aardio" comment="config\webconfig.aardio"/>
+	</folder>
+	<folder name="log" path="log" comment="log" embed="false"/>
+	<folder name="www" path="www" comment="wwwroot" embed="false">
+		<file name="index.aardio" path="www\index.aardio" comment="www\index.aardio"/>
+	</folder>
+</project>

@@ -1,0 +1,110 @@
+﻿
+import web.json;
+import fsys;
+
+namespace carl
+
+class session{
+	ctor( sessionId, dir = "/config/session/",timeOut=86400){//过期时间秒,默认1天
+		sessionId := ..request.sessionId;
+		this.sessionId = sessionId;
+		this.dir = dir;
+		this.filename = this.dir ++ this.sessionId;
+		this.timeOut = timeOut;
+		
+		if( !..io.exist(this.dir) ){
+			if( !..io.createDir(this.dir) ) return null,"创建目录失败";
+		}
+	};
+
+	create = function(filename){
+		var tSession = {};
+		tSession.endTimeOut = tonumber(..time()) + this.timeOut;
+		tSession.Session = {};
+		return save(filename,tSession);
+	}
+	
+	setTimeOut = function(timeOut = 86400){
+		var tSession = read(this.filename);
+		if(!tSession) return ;
+		tSession.endTimeOut = tonumber(..time()) + timeOut;
+		return save(this.filename,tSession);
+	}
+	
+	set = function(k,v){//保存Session值
+		if( !..io.exist(this.filename) ){
+			if( !this.create(this.filename) ) return null,"保存文件失败,请确认是否有权限";
+		}
+		var tSession = read(this.filename);
+		if(!tSession) return ;
+		tSession.Session[k] = v;
+		return save(this.filename,tSession);
+	}
+	
+	get = function(k){//读取Session值
+		var tSession = read(this.filename);
+		if(!tSession) return ;
+		return tSession.Session[k];
+	}
+	
+	clear = function(){
+		..io.remove(this.filename);
+	}
+
+}
+
+namespace session
+
+clear = function(sessionId, dir = "/config/session/"){
+	sessionId := ..request.sessionId;
+	var filename = dir ++ sessionId;
+	..io.remove(filename);
+}
+
+//读取session文件
+read = function(filename){
+	var json = ..string.load(filename);
+	if(!#json) return ;
+	var tSession = ..web.json.parse(json);
+	if( tonumber(..time()) > tSession.endTimeOut){ //过期
+		..io.remove(filename);
+		return ; 
+	}
+	return tSession;
+}
+
+//保存session文件
+save = function(filename,tSession){
+	return ..string.save(filename, ..web.json.stringify(tSession))
+}
+
+delete = function(dir = "/config/session/"){
+	..fsys.enum( dir, "*.*",
+		function(dir,filename,fullpath,findData){ 
+			if(filename) read(fullpath);
+		} 
+		,false
+	);
+}
+
+get = function(k,dir = "/config/session/"){
+	var filename = dir ++ ..request.sessionId;
+	var tSession = read(filename);
+	if(!tSession) return ;
+	return tSession.Session[k];
+}
+
+/**intellisense()
+carl.session = session库
+carl.session()
+carl.session(sessionId,dir,timeOut) = 创建session对像,所有参数都可以省略,\n参数一: request.sessionId,\n参数二:保存目录,默认 /config/session/ \n参数三:过期时间(秒),默认1天
+carl.session() = !session.
+!session.setTimeOut(86400) = 设置过期时间(秒),默认1天
+!session.set("key",value) = 保存Session值,成功返回true,失败返回null,\n参数一:Session名称,\n参数二:Session值,支持:字符串,数值,table对像 类型
+!session.get("key") = 读取Session值
+!session.clear() = 清空当前session,可用于退出登录时调用
+
+carl.session.delete() = 删除所有过期的session文件,参数:session目录,默认 /config/session/
+carl.session.clear() = 清空当前session,可用于退出登录时调用
+carl.session.get("key") =  读取Session值
+end intellisense**/
