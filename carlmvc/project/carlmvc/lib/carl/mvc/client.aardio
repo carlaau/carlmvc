@@ -163,7 +163,12 @@ client = class {
 		var tab,err = ...;
 		if( tab === null && err === null ) return ;
 		var t;
-		if( type(tab) === type.null || type(tab) === type.boolean){
+		if(tab === true && type(err) === type.table){
+			t = {};
+			t.Success = true;
+			t.Result = err;
+		}
+		elseif( type(tab) === type.null || type(tab) === type.boolean){
 			t = {};
 			t.Message = err;
 			t.Success = tab ? true : false;

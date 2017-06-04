@@ -35,5 +35,11 @@
 	<folder name="log" path="log" comment="log" embed="false"/>
 	<folder name="www" path="www" comment="wwwroot" embed="false">
 		<file name="index.aardio" path="www\index.aardio" comment="www\index.aardio"/>
+		<file name="web.config" path="www\web.config" comment="www\web.config"/>
+		<folder name="js" path="www\js" comment="www\js">
+			<folder name="default" path="www\js\default" comment="www\js\default">
+				<file name="default.js" path="www\js\default\default.js" comment="www\js\default\default.js"/>
+			</folder>
+		</folder>
 	</folder>
 </project>
