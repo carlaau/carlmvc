@@ -186,7 +186,7 @@ client = class {
 		..print(t);
 	}
 
-	errlog = function(err,code=500){
+	errlog = function(err,code){
 		if( !#err ) return ;
 		..carl.mvc.common.error(err,this.debug,code);
 	}
