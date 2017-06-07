@@ -32,7 +32,7 @@ client = class {
 		
 		var tabCtl = this.configController;
 		var controllerDir,controllerName = string.match(controllerPath,"([\w\.]*?)\.?(\w+)$");
-		if(!controllerName) return null,string.format('Failed to format "%s" controller path.', controllerPath);
+		if(!controllerName) return null,string.format('404 Not Found "%s" controller path.', controllerPath),404;
 
 		var ctldir = string.replace(tabCtl.dir,"\/","\");
 		if(#controllerDir){
@@ -42,7 +42,7 @@ client = class {
 		}
 
 		var ctlPath = string.concat(ctldir,controllerName,tabCtl.ext,".aardio");
-		if(!..io.exist(ctlPath)) return null,string.format('Not Found "%s" controller file.', ctlPath);
+		if(!..io.exist(ctlPath)) return null,string.format('404 Not Found "%s" controller file.', ctlPath),404;
 
 		var tabController = {};	
 		var f,err = loadcode(ctlPath);
@@ -69,11 +69,11 @@ client = class {
 		if( !#method ) return ; 
 		method = string.trim(method);
 		var controllerPath,funcName = string.match(method,"([\w\.]+?)\.(\w+)$");
-		if( !funcName ) return this.errlog(string.format('Failed to format "%s" controller function path. eg: default.index', method));
+		if( !funcName ) return this.errlog(string.format('404 Not Found "%s" controller action path.', method),404);
 		
-		var controllerFunc,err = this.loadController(controllerPath);
+		var controllerFunc,err,code = this.loadController(controllerPath);
 		if( controllerFunc === false ) return this.errlog(err);
-		if( !controllerFunc ) return this.errlog(err);
+		if( !controllerFunc ) return this.errlog(err,code);
 
 		controllerFunc.string = ..string;
 		controllerFunc.table = ..table;
@@ -83,17 +83,20 @@ client = class {
 		controllerFunc.time = ..time;
 		controllerFunc.math = ..math;
 		controllerFunc.io = ..io;
-		
+		 
 		var controller;
 		if( type(controllerFunc) == type.class ){//控制器支持class类库
-			controller,err = controllerFunc();
+			var ok;
+			ok,controller,err = call(controllerFunc);
+			if(!ok) return this.errlog(controller);
 			if( !controller ) return this.errlog(err);
+			if( type.table != type(controller) ) return this.errlog(string.format('"%s" controller,构造函数ctor:返回值不是table对像',controllerFunc.nameSpace)); 
 		}
 		else {
 			controller = controllerFunc;
 		}
 		var func,,fname = getByNamespace(funcName,controller,true);
-		if( type.function != type(func) ) return this.errlog(string.format('Not Found "%s" function in "%s" namespace.', funcName,controllerFunc.nameSpace));
+		if( type.function != type(func) ) return this.errlog(string.format('404 Not Found "%s" action in "%s" controller.', funcName,controllerFunc.nameSpace),404);
 		funcName = fname;
 		
 		controllerFunc.view = {};
@@ -152,7 +155,7 @@ client = class {
 		var t = { call(func,controllerFunc,table.unpackArgs(tParam)) };
 		var ok,err = t[1],t[2];
 		if( !ok ){
-			if(#err) err = string.format('controller: "%s",function: "%s" Run Error.\r\n' ++ err, controllerFunc.nameSpace,funcName);
+			if(#err) err = string.format('controller: "%s",action: "%s" Run Error.\r\n' ++ err, controllerFunc.nameSpace,funcName);
 			return this.errlog(err);
 		}
 		table.remove(t);
@@ -183,9 +186,9 @@ client = class {
 		..print(t);
 	}
 
-	errlog = function(err){
+	errlog = function(err,code=500){
 		if( !#err ) return ;
-		..carl.mvc.common.error(err,this.debug);
+		..carl.mvc.common.error(err,this.debug,code);
 	}
 	
 	urlAction = function(funcName,controller){
