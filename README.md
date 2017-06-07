@@ -4,4 +4,4 @@
 ## 使用
 打开aardio IDE开发环境,在IDE右边工具,找到carlmvc目录下main双击启动
 
-![image](http://carlmvc.aardio.org/images/mvc.png)
+![image](http://carlmvc.aardio.org/images/mvc.jpg)
