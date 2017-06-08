@@ -126,7 +126,7 @@ client = class {
 
 		var tParam = {};
 		if( string.startWith(..request.contentType:"","application/json",true) ){
-			var postdata = string.trim(..request.postData());
+			var postdata = string.trim(..request.postData():"");
 			if( postdata[1] == '{'# || postdata[1] == '['# ){
 				try{
 					tParam[1] = ..web.json.parse(postdata);

@@ -160,8 +160,8 @@ exportExcel = function(tabPage,filename){
 		filename = tostring(tnow);
 	}
 	filename += ".xls";
-	var pathname = ..MVC_WWW_DIR ++ "config\temp\" ++ filename;
-	..fsys.createDir(..MVC_WWW_DIR ++ "config\temp\");
+	var pathname = ..MVC_LOG_DIR ++ "temp\" ++ filename;
+	..fsys.createDir(..MVC_LOG_DIR ++ "temp\");
 	var dbXls,err = ..access(pathname); //文件不存在可自动创建
     if( !dbXls ) return null,err;
     var sheetname = "sheet2";
