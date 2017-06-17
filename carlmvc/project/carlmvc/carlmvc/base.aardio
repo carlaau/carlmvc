@@ -27,10 +27,6 @@ if(request){
 var tabFile = carl.mvc.common.getDirCodeFile(MVC_CONFIG_DIR);
 for(i,fullpath in tabFile) loadcodex(fullpath);
 
-//加载MVC应用公共函数(用户自定义)
-tabFile = carl.mvc.common.getDirCodeFile(MVC_COMMON_DIR);
-for(i,fullpath in tabFile) loadcodex(fullpath);
-
 //注册全局MVC应用
 for(mvcname,tab in config.mvcconfig){
 	tab.controller.dir = MVC_APP_DIR ++ tab.controller.dir;
@@ -41,6 +37,13 @@ for(mvcname,tab in config.mvcconfig){
 	global[mvcname] = app;
 }
 
+//加载MVC应用公共函数(用户自定义)
+tabFile = carl.mvc.common.getDirCodeFile(MVC_COMMON_DIR);
+for(i,fullpath in tabFile) loadcodex(fullpath);
+
 //加载MVC应用过滤器
 tabFile = carl.mvc.common.getDirCodeFile(MVC_FILTERS_DIR);
 for(i,fullpath in tabFile) loadcodex(fullpath);
+
+//重新设置session目录和过期时间
+carl.session.setDir(config.webconfig.sessionDir,config.webconfig.sessionTimeOut);

@@ -1,110 +1,163 @@
 ﻿
-import web.json;
 import fsys;
 
 namespace carl
 
 class session{
-	ctor( sessionId, dir = "/config/session/",timeOut=86400){//过期时间秒,默认1天
-		sessionId := ..request.sessionId;
-		this.sessionId = sessionId;
+	ctor( dir,timeOut=86400){//过期时间秒,默认1天
+		dir := "/config/session/";
 		this.dir = dir;
-		this.filename = this.dir ++ this.sessionId;
 		this.timeOut = timeOut;
-		
-		if( !..io.exist(this.dir) ){
-			if( !..io.createDir(this.dir) ) return null,"创建目录失败";
-		}
+		this.deleteTime = this.dir ++ "d.txt";
+		..table.gc(this,"close");
 	};
-
-	create = function(filename){
+	
+	create = function(){
 		var tSession = {};
-		tSession.endTimeOut = tonumber(..time()) + this.timeOut;
+		tSession.createTime = tonumber(..time());
 		tSession.Session = {};
-		return save(filename,tSession);
+		return tSession; 
 	}
 	
-	setTimeOut = function(timeOut = 86400){
-		var tSession = read(this.filename);
-		if(!tSession) return ;
-		tSession.endTimeOut = tonumber(..time()) + timeOut;
-		return save(this.filename,tSession);
-	}
-	
-	set = function(k,v){//保存Session值
-		if( !..io.exist(this.filename) ){
-			if( !this.create(this.filename) ) return null,"保存文件失败,请确认是否有权限";
-		}
-		var tSession = read(this.filename);
-		if(!tSession) return ;
+	set = function(k,v){
+		var sessionId = ..request.sessionId;
+		if(!sessionId) return ;
+
+		var tSession = this.read(sessionId) : this.create();
+		
+		var nowTime = tonumber(..time());
+		tSession.updateTime = nowTime;
+		tSession.endTimeOut = nowTime + this.timeOut;
 		tSession.Session[k] = v;
-		return save(this.filename,tSession);
+		return this.save(tSession,sessionId);
 	}
 	
-	get = function(k){//读取Session值
-		var tSession = read(this.filename);
+	get = function(k){
+		var sessionId = ..request.sessionId;
+		if(!sessionId) return ;
+			
+		var tSession = this.read(sessionId);
 		if(!tSession) return ;
+		
+		var nowTime = tonumber(..time());
+		tSession.readTime = nowTime;
+		tSession.endTimeOut = nowTime + this.timeOut;
+		this.save(tSession,sessionId);
 		return tSession.Session[k];
 	}
-	
-	clear = function(){
-		..io.remove(this.filename);
+
+	save = function(tSession,sessionId){
+		var fullpath = this.dir ++ sessionId;
+		return ..string.save(fullpath, ..table.tostring(tSession));
 	}
 
+	read = function(sessionId){
+		var fullpath = this.dir ++ sessionId;
+		var str = ..string.load(fullpath);
+		if(!#str) return ;
+		
+		var tSession;
+		try{ tSession = eval(str);}
+		if( type.table != type(tSession) ) return ; 
+		if( !tSession.endTimeOut ) return ;
+	
+		if( tonumber(..time()) > tSession.endTimeOut){ //过期
+			..io.remove(fullpath);
+			return ;
+		}
+		return tSession;
+	}
+	
+	setTimeOut = function(timeOut,sessionId){
+		sessionId := ..request.sessionId;
+		if(!sessionId) return ;
+		
+		var tSession = this.read(sessionId) : this.create();
+		if(timeOut)	this.timeOut = timeOut;
+		tSession.endTimeOut = tonumber(..time()) + this.timeOut;
+		return this.save(tSession,sessionId);
+	}
+
+	clear = function(){
+		var sessionId = ..request.sessionId;
+		if(!sessionId) return ;
+		
+		var fullpath = this.dir ++ sessionId;
+		return ..io.remove(fullpath);
+	}
+
+	delete = function(deleteTimeOut = 60){
+		if( !..io.exist(this.dir) ) return ; 
+		var nowTime = tonumber(..time());
+		if(deleteTimeOut){
+			var lastTime = ..string.load(this.deleteTime):0;
+			lastTime = tonumber(lastTime);			
+			if( nowTime - lastTime < deleteTimeOut) return ;
+		}
+		..string.save(this.deleteTime, nowTime);
+		
+		..thread.create(function(dir){
+			import fsys;
+			
+			fsys.enum(dir, "*.*",
+				function(dir,filename,fullpath,findData){ 
+					if(#filename != 32) return ;
+					
+					var str = string.load(fullpath);
+					if(!#str) return ;
+					
+					var tSession;
+					try{ tSession = eval(str);}
+					if( type.table != type(tSession) ) return ; 
+					if( !tSession.endTimeOut ) return ;
+				
+					if( tonumber(time()) > tSession.endTimeOut){ //过期
+						io.remove(fullpath);
+					}
+				}
+				,false
+			);
+		},this.dir);
+	}
+	
+	close = function(){
+		this.delete();
+	}
+	
 }
 
 namespace session
 
-clear = function(sessionId, dir = "/config/session/"){
-	sessionId := ..request.sessionId;
-	var filename = dir ++ sessionId;
-	..io.remove(filename);
+setDir = function(dir,timeOut){
+	var session = ..carl.session(dir,timeOut);
+	get = session.get;
+	set = session.set;
+	clear = session.clear;
+	setTimeOut = session.setTimeOut;
+	delete = session.delete;
+	close = session.close;
 }
 
-//读取session文件
-read = function(filename){
-	var json = ..string.load(filename);
-	if(!#json) return ;
-	var tSession = ..web.json.parse(json);
-	if( tonumber(..time()) > tSession.endTimeOut){ //过期
-		..io.remove(filename);
-		return ; 
-	}
-	return tSession;
-}
+setDir(dir,timeOut);
 
-//保存session文件
-save = function(filename,tSession){
-	return ..string.save(filename, ..web.json.stringify(tSession))
-}
-
-delete = function(dir = "/config/session/"){
-	..fsys.enum( dir, "*.*",
-		function(dir,filename,fullpath,findData){ 
-			if(filename) read(fullpath);
-		} 
-		,false
-	);
-}
-
-get = function(k,dir = "/config/session/"){
-	var filename = dir ++ ..request.sessionId;
-	var tSession = read(filename);
-	if(!tSession) return ;
-	return tSession.Session[k];
-}
 
 /**intellisense()
 carl.session = session库
 carl.session()
-carl.session(sessionId,dir,timeOut) = 创建session对像,所有参数都可以省略,\n参数一: request.sessionId,\n参数二:保存目录,默认 /config/session/ \n参数三:过期时间(秒),默认1天
+carl.session(dir,timeOut) = 创建session对像,所有参数都可以省略,\n参数一:保存目录,默认 /config/session/ \n参数二:过期时间(秒),默认1天,指没有进行读写session的空闲时间
 carl.session() = !session.
-!session.setTimeOut(86400) = 设置过期时间(秒),默认1天
-!session.set("key",value) = 保存Session值,成功返回true,失败返回null,\n参数一:Session名称,\n参数二:Session值,支持:字符串,数值,table对像 类型
-!session.get("key") = 读取Session值
+!session.setTimeOut(86400) = 重新设置过期时间(秒),默认1天
+!session.set("key",value) = 保存Session值,成功返回true,失败返回null,\n参数一:Session名称,\n参数二:Session值,支持:字符串,数值,table对像等所有数据类型\n会根据保存时间重新设置延长过期时间
+!session.get("key") = 读取Session值\n会根据读取时间重新设置延长过期时间
 !session.clear() = 清空当前session,可用于退出登录时调用
+!session.delete() = 删除所有过期的session文件,默认60秒执行一次
+!session.close() = 关闭session对像,并执行delete()函数,\n删除过期session\n注意此函数并不会清空当前session\n可以不调用此函数,在对像销毁时会自动调用
 
-carl.session.delete() = 删除所有过期的session文件,参数:session目录,默认 /config/session/
+carl.session.get("key") =  读取Session值\n会根据读取时间重新设置延长过期时间
+carl.session.set("key",value) = 保存Session值,成功返回true,失败返回null,\n参数一:Session名称,\n参数二:Session值,支持:字符串,数值,table对像等所有数据类型\n会根据保存时间重新设置延长过期时间
+carl.session.setTimeOut(86400) = 重新设置过期时间(秒),默认1天,指没有进行读写session的空闲时间
+carl.session.delete() = 删除所有过期的session文件,默认60秒执行一次
 carl.session.clear() = 清空当前session,可用于退出登录时调用
-carl.session.get("key") =  读取Session值
+carl.session.close() = 关闭session对像,并执行delete()函数,\n删除过期session\n注意此函数并不会清空当前session\n请在网页请求结束时调用
+carl.session.setDir("/config/session/",86400) = 重新设置session目录,过期时间
 end intellisense**/

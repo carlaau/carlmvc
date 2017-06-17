@@ -88,16 +88,18 @@ uploadFile = function(){//获取上传附件路径
 
 	var nowtime = ..time();
 	nowtime.format = "%Y/%m/%d";
-	var dir = ..MVC_WWW_DIR ++ "upload/" ++ tostring(nowtime);
-	..fsys.createDir(dir);
+	var fileDir = "/upload/" ++ tostring(nowtime);	
+	var dir = ..MVC_WWW_DIR ++ fileDir;
+	..fsys.createDir(dir);	
 	nowtime.format = "%H%M%S";
-	
 	var ext = string.match(fileData.file.filename,"(\.\a+)$"):"";
-	var filename = dir ++ "/" ++ tostring(nowtime) ++ ..string.random(4) ++ ext;
-	var ok,err = fileData.file.save(filename);
+	var filename = tostring(nowtime) ++ ..string.random(4) ++ ext;
+	var savename = dir ++ "/" ++ filename;
+	var fileurl = fileDir ++ "/" ++ filename;
+	var ok,err = fileData.file.save(savename);
 	if(ok){
-		if( ..io.exist(filename) ){
-			return filename; 
+		if( ..io.exist(savename) ){
+			return fileurl; 
 		}
 		else {
 			return null,"上传失败"; 

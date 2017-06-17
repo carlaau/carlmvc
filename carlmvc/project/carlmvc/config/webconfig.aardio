@@ -36,6 +36,12 @@ dbErrorLog = true;
 */
 printSql = false;
 
+/*设置session目录*/
+sessionDir = ..MVC_LOG_DIR ++ "session\";
+
+/*设置session过期时间(秒),默认1天*/
+sessionTimeOut = 86400;
+
 /*
 后台登录页面,主要用于没有登录,跳转到登录页面
 */

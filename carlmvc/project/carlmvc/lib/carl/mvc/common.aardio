@@ -17,8 +17,15 @@ string = ..string;
 
 proxy = function(tab) {
 	tab := {};
-	var tSource = table.clone(tab);
-	var tProxy = table.clone(tab);
+	var tSource = {};
+	for(k,v in tab){		
+		if(type.table == type(v)) v = proxy(v);
+		if( type(k) == "string" && k[1] !='_'# ){
+			k = string.lower(k);
+		}
+		tSource[k] = v;
+	}
+	var tProxy = table.clone(tSource);
 	tProxy@ = {
         _get = function(k){
         	if( type(k) == "string" && k[1]=='_'# ) return; 
@@ -117,7 +124,7 @@ self["error"] = function(err,debug,code){
 }
 
 /**intellisense(carl.mvc.common)
-proxy(tab) = table键名忽略大小写,如request.get/post 
+proxy(tab) = 设置table对像读写忽略键名大小写,并且键名转为小写,返回新的table对像,如request.get/post 
 fullpath("\") = 等价于io.fullpath函数,增加以".."两点开头格式,比如 "..\" 返回当前网站根目录上一级目录
 getDirCodeFile(dir) = 搜索目录下aardio代码文件名,返回table文件完整路径,参数二:为false则忽略子目录
 saveErrorLog(err,sql) = 保存错误信息，在carlmvc插件调试的错误日志可以查看

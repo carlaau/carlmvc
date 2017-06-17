@@ -13,8 +13,7 @@
 
 //判断后台是否有登录,全局函数
 checkAdminSessionLogin = function(){
-	var session = carl.session();
-	var tabAdminLogin = session.get("tabAdminLogin");
+	var tabAdminLogin = carl.session.get("tabAdminLogin");
 	if(!tabAdminLogin){
 		if(request.headers["x-requested-with"] == "XMLHttpRequest"){
 			response.status = 401;

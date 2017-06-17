@@ -83,7 +83,7 @@ client = class {
 		controllerFunc.time = ..time;
 		controllerFunc.math = ..math;
 		controllerFunc.io = ..io;
-		 
+
 		var controller;
 		if( type(controllerFunc) == type.class ){//控制器支持class类库
 			var ok;
@@ -95,12 +95,13 @@ client = class {
 		else {
 			controller = controllerFunc;
 		}
+
 		var func,,fname = getByNamespace(funcName,controller,true);
 		if( type.function != type(func) ) return this.errlog(string.format('404 Not Found "%s" action in "%s" controller.', funcName,controllerFunc.nameSpace),404);
 		funcName = fname;
 		
-		controllerFunc.view = {};
-		controllerFunc.view.loadcode = function(viewpath, ...){
+		controller.view = {};
+		controller.view.loadcode = function(viewpath, ...){
 			var filename = string.replace(viewpath,"\.","\");
 			
 			var tView = this.configView;
@@ -144,15 +145,15 @@ client = class {
 		if(!t) return this.errlog(string.format('controller path: "%s",Error: "%s"', controllerFunc.ctlPathFile,err));
 		for(i=len+1;#t;1){
 			var param = string.lower(t[i]);
-			tParam[i] = ..request.get[param] : ..request.post[param];	
+			tParam[i] = ..request.get[param] : ..request.post[param];
 		}
 
 		if( this.loadActionBefore ){
 			var ok,err = this.loadActionBefore(controller, controllerPath, funcName);
 			if( ok === false ) return this.errlog(err);
 		}
-		
-		var t = { call(func,controllerFunc,table.unpackArgs(tParam)) };
+
+		var t = { call(func,controller,table.unpackArgs(tParam)) };
 		var ok,err = t[1],t[2];
 		if( !ok ){
 			if(#err) err = string.format('controller: "%s",action: "%s" Run Error.\r\n' ++ err, controllerFunc.nameSpace,funcName);
@@ -160,6 +161,7 @@ client = class {
 		}
 		table.remove(t);
 		this.loadActionAfter(controller, controllerPath, funcName, table.unpackArgs(t));
+		if(..carl.session.close) ..carl.session.close();
 	}
 	
 	loadActionAfter = function(controller, controllerPath, funcName, ...){
