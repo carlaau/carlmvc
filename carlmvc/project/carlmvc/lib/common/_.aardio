@@ -112,7 +112,13 @@ uploadFile = function(){//获取上传附件路径
 
 //生成缩略图,返回缩图片url，第5个参数是否按比例缩放
 imageThumbnail = function(imageUrl,w,h,saveUrl,constRatio){
-	saveUrl := string.replace(imageUrl,"\.","_" ++ w ++ "_" ++ h ++ ".");	
+	saveUrl := string.replace(imageUrl,"\.","_" ++ w ++ "_" ++ h ++ ".");
+	var thumUrl = saveUrl;
+	if(!..io.exist(imageUrl	)){
+		imageUrl = ..MVC_WWW_DIR ++ imageUrl;
+		saveUrl = ..MVC_WWW_DIR ++ saveUrl;
+	}
+	if(!..io.exist(imageUrl	)) return false,"生成缩略图失败,图片不存在"; 
 	var img = ..gdip.image(imageUrl);
 	var width = img.width;
 	var height = img.height; 
@@ -134,7 +140,7 @@ imageThumbnail = function(imageUrl,w,h,saveUrl,constRatio){
 	bitmagNew.dispose();
 	img.dispose();
 	if(ok){
-		return saveUrl;
+		return thumUrl;
 	}
 	else {
 		return null,err; 
