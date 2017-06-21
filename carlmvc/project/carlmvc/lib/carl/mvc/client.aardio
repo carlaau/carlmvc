@@ -87,7 +87,7 @@ client = class {
 		var controller;
 		if( type(controllerFunc) == type.class ){//控制器支持class类库
 			var ok;
-			ok,controller,err = call(controllerFunc);
+			ok,controller,err = call(controllerFunc,,funcName,controllerPath);
 			if(!ok) return this.errlog(controller);
 			if( !controller ) return this.errlog(err);
 			if( type.table != type(controller) ) return this.errlog(string.format('"%s" controller,构造函数ctor:返回值不是table对像',controllerFunc.nameSpace)); 

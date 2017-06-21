@@ -9,94 +9,107 @@ class session{
 		this.dir = dir;
 		this.timeOut = timeOut;
 		this.deleteTime = this.dir ++ "d.txt";
-		..table.gc(this,"close");
+		table.gc(this,"close");
 	};
 	
 	create = function(){
 		var tSession = {};
-		tSession.createTime = tonumber(..time());
+		tSession.createTime = tonumber(time());
 		tSession.Session = {};
 		return tSession; 
 	}
 	
 	set = function(k,v){
-		var sessionId = ..request.sessionId;
+		var sessionId = request.sessionId;
 		if(!sessionId) return ;
 
 		var tSession = this.read(sessionId) : this.create();
 		
-		var nowTime = tonumber(..time());
+		var nowTime = tonumber(time());
 		tSession.updateTime = nowTime;
 		tSession.endTimeOut = nowTime + this.timeOut;
 		tSession.Session[k] = v;
-		return this.save(tSession,sessionId);
+		return this.saveas(tSession,sessionId);
 	}
 	
 	get = function(k){
-		var sessionId = ..request.sessionId;
-		if(!sessionId) return ;
+		var sessionId = request.sessionId;
+		if(!sessionId) return;
 			
-		var tSession = this.read(sessionId);
-		if(!tSession) return ;
+		var tSession,err = this.read(sessionId);
+		if(!tSession) return null,err;
 		
-		var nowTime = tonumber(..time());
+		var nowTime = tonumber(time());
 		tSession.readTime = nowTime;
 		tSession.endTimeOut = nowTime + this.timeOut;
-		this.save(tSession,sessionId);
+		this.saveas(tSession,sessionId);
 		return tSession.Session[k];
 	}
 
-	save = function(tSession,sessionId){
+	saveas = function(tSession,sessionId){
 		var fullpath = this.dir ++ sessionId;
-		return ..string.save(fullpath, ..table.tostring(tSession));
+		var str = table.tostring(tSession);
+		var ok,err;	
+		var mutex = process.mutex("session" + sessionId );
+		if(mutex){
+			if( mutex.waitOne() ){
+				ok,err = save(fullpath,str);
+				mutex.release();
+			}
+			mutex.close();
+		}
+		else {
+			ok,err = save(fullpath,str);
+		}
+		return ok,err; 
 	}
 
 	read = function(sessionId){
 		var fullpath = this.dir ++ sessionId;
-		var str = ..string.load(fullpath);
-		if(!#str) return ;
+		var str = load(fullpath);
+		if(!#str) return;
 		
 		var tSession;
 		try{ tSession = eval(str);}
-		if( type.table != type(tSession) ) return ; 
-		if( !tSession.endTimeOut ) return ;
+		if( type.table != type(tSession) ) return; 
+		if( !tSession.endTimeOut ) return;
 	
-		if( tonumber(..time()) > tSession.endTimeOut){ //过期
-			..io.remove(fullpath);
+		if( tonumber(time()) > tSession.endTimeOut){ //过期
+			io.remove(fullpath);
 			return ;
 		}
 		return tSession;
 	}
 	
 	setTimeOut = function(timeOut,sessionId){
-		sessionId := ..request.sessionId;
+		sessionId := request.sessionId;
 		if(!sessionId) return ;
 		
 		var tSession = this.read(sessionId) : this.create();
 		if(timeOut)	this.timeOut = timeOut;
-		tSession.endTimeOut = tonumber(..time()) + this.timeOut;
-		return this.save(tSession,sessionId);
+		tSession.endTimeOut = tonumber(time()) + this.timeOut;
+		return this.saveas(tSession,sessionId);
 	}
 
 	clear = function(){
-		var sessionId = ..request.sessionId;
+		var sessionId = request.sessionId;
 		if(!sessionId) return ;
 		
 		var fullpath = this.dir ++ sessionId;
-		return ..io.remove(fullpath);
+		return io.remove(fullpath);
 	}
 
 	delete = function(deleteTimeOut = 60){
-		if( !..io.exist(this.dir) ) return ; 
-		var nowTime = tonumber(..time());
+		if( !io.exist(this.dir) ) return ; 
+		var nowTime = tonumber(time());
 		if(deleteTimeOut){
-			var lastTime = ..string.load(this.deleteTime):0;
-			lastTime = tonumber(lastTime);			
+			var lastTime = load(this.deleteTime):0;
+			lastTime = tonumber(lastTime) : 0;	
 			if( nowTime - lastTime < deleteTimeOut) return ;
 		}
-		..string.save(this.deleteTime, nowTime);
+		save(this.deleteTime, nowTime);
 		
-		..thread.create(function(dir){
+		thread.create(function(dir){
 			import fsys;
 			
 			fsys.enum(dir, "*.*",
@@ -127,6 +140,14 @@ class session{
 }
 
 namespace session
+
+table = ..table;
+load = ..string.load;
+save = ..string.save;
+io = ..io;
+time = ..time;
+request = ..request;
+process = ..process;
 
 setDir = function(dir,timeOut){
 	var session = ..carl.session(dir,timeOut);

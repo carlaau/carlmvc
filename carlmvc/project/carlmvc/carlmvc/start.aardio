@@ -18,6 +18,8 @@ import carl.mvc.common;
 import dbase;
 import common;
 
+printlog = carl.mvc.common.printlog;
+
 // 加载carlmvc框架配置
 loadcodex(MVC_ROOT_DIR ++ "carlmvc\config.aardio");
 
