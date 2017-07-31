@@ -20,7 +20,7 @@ class session{
 	}
 	
 	set = function(k,v){
-		var sessionId = request.sessionId;
+		var sessionId = ..request.sessionId;
 		if(!sessionId) return ;
 
 		var tSession = this.read(sessionId) : this.create();
@@ -33,7 +33,7 @@ class session{
 	}
 	
 	get = function(k){
-		var sessionId = request.sessionId;
+		var sessionId = ..request.sessionId;
 		if(!sessionId) return;
 			
 		var tSession,err = this.read(sessionId);
@@ -82,7 +82,7 @@ class session{
 	}
 	
 	setTimeOut = function(timeOut,sessionId){
-		sessionId := request.sessionId;
+		sessionId := ..request.sessionId;
 		if(!sessionId) return ;
 		
 		var tSession = this.read(sessionId) : this.create();
@@ -92,7 +92,7 @@ class session{
 	}
 
 	clear = function(){
-		var sessionId = request.sessionId;
+		var sessionId = ..request.sessionId;
 		if(!sessionId) return ;
 		
 		var fullpath = this.dir ++ sessionId;
@@ -146,7 +146,6 @@ load = ..string.load;
 save = ..string.save;
 io = ..io;
 time = ..time;
-request = ..request;
 process = ..process;
 
 setDir = function(dir,timeOut){
