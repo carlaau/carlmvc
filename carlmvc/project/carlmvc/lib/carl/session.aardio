@@ -109,7 +109,7 @@ class session{
 		}
 		save(this.deleteTime, nowTime);
 		
-		thread.create(function(dir){
+		..thread.create(function(dir){
 			import fsys;
 			
 			fsys.enum(dir, "*.*",

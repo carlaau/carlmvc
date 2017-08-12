@@ -85,8 +85,10 @@ saveErrorLog = function(err,sql){
 	table.push(tab,tostring(..time(,"%Y-%m-%d %H:%M:%S")));
 	if(..request){
 		table.push(tab,string.concat("[Request Url]:",..request.uri));
-		var postdata = ..request.postData();
-		if(#postdata) table.push(tab,string.concat("[PostData]:",postdata));
+		if(..request.get["_method"] != "rpc.start"){
+			var postdata = ..request.postData();
+			if(#postdata) table.push(tab,string.concat("[PostData]:",postdata));
+		}
 	}
 	if(#sql) table.push(tab,string.concat("[Sql]:",sql));
 	err = string.replace(string.trim(err),'\n','\r\n');
