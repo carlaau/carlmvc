@@ -5,8 +5,9 @@ client = class {
 	ctor( serverUrl,rsaPublicKey,... ){
 		this.serverUrl = serverUrl;
 		this.rsaPublicKey = rsaPublicKey;
-		this.code = "json";//传输协议 json,aardio
+		this.code = "aardio";//传输协议 json,aardio
 		this.client = web.rest.client( ... );
+		this.client._http.addHeaders = "Accept-Encoding:gzip, deflate";
 		
 		this.client.stringifyRequestParameters = function(postdata,utf8){
 			if( # this.rsaPublicKey ){
@@ -44,6 +45,7 @@ namespace client{
 	import web.json;
 	import web.rest.client;
 	import inet.url;
+	import zlib;
 	
 	table = ..table;
 	string = ..string;
@@ -71,7 +73,7 @@ namespace client{
 			}else {
 				carl.rpc.format(t);
 				postdata = web.json.stringify(t);
-			}			
+			}
 			return owner._post( owner._urlReal, postdata) ;
 		}
 	}

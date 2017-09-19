@@ -35,8 +35,8 @@ base = class {
 		return this.errorlog( this.database.getTableFirst(this.dbconfig,sql,...) );
 	}
 	
-	getTables = function( tsql ){//执行多个select语句,参数table
-		return this.errorlog( this.database.getTables(this.dbconfig, tsql) );
+	getTables = function( tsql, ... ){//执行多个select语句,参数table
+		return this.errorlog( this.database.getTables(this.dbconfig, tsql, ...) );
 	}
 
 	transaction = function( ... ){
@@ -212,9 +212,9 @@ dbase.base() = !dbaseBase.
 <-base->
 !dbaseBase.getTable(sql,格式化参数) = 执行一条SQL\n成功返回查询结果集table对像\n错误返回:null,err,sql\n每个元素代表一行,每行由N个键值对列组成,键fields为列名结果集\n格式化参数 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.getTableFirst(sql,格式化参数) = 执行一条SQL\n成功返回查询第一条记录table对像,空记录返回空table对像\n错误返回:null,err,sql\n格式化参数 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
-!dbaseBase.getTables(tsql) = 执行多条SQL,成功返回查询table数据集\n错误返回:null,err,sql\n参数:table对像 格式:{"sql1";"sql2"}
+!dbaseBase.getTables(tsq,格式化参数) = 执行多条SQL,成功返回查询table数据集\n错误返回:null,err,sql\n参数:table对像 格式:{"sql1";"sql2"}\n格式化参数 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.exec(sql,格式化参数) = 执行sql,成功返回ture,失败返回null,err,sql\n格式化参数 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
-!dbaseBase.transaction(tsql) = 事务执行多条sql语句\n成功返回ture,失败返回null,err,sql\n参数:table对像 格式:{"sql1";"sql2"},\n说明:全部执行成功,或全部失败\n mysql表需InnoDB类型
+!dbaseBase.transaction(tsql,格式化参数) = 事务执行多条sql语句\n成功返回ture,失败返回null,err,sql\n参数一:table对像,格式:{"sql1";"sql2"}或参数一:sql语句,\n说明:全部执行成功,或全部失败\n mysql表需InnoDB类型\n格式化参数 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.storedProcedures(name,"其他参数") = 执行存储过程,参数1:存储过程名称,参数2以后,是传存储过程函数参数
 !dbaseBase.getInsertSql("表名", tab) = 返回新增SQL语句\n参数:表名,table对像 格式:{字段1="值1";字段2="值2"}
 !dbaseBase.getUpdateSql("表名", tab, where, 格式化参数table) = 返回更新SQL语句\n参数:表名, table对像,where条件,格式化参数table\n参数四 可省略\n参数二格式:{字段1="值1";字段2="值2"}\n格式化参数是一个table表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符

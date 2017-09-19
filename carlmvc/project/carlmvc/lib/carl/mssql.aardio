@@ -111,9 +111,8 @@ mssql = class {
 		return row,err;
 	}
 	
-	transaction = function( tsql ){//事务执行
-		if(type.table != type(tsql)) return null,"参数需table对像";
-		if(!#tsql) return null,"无SQL语句";  
+	transaction = function( tsql, ... ){//事务执行
+		if(!#tsql) return null,"无事务SQL语句";  
 		var sql =/*
 		SET NOCOUNT ON;
 		BEGIN TRY
@@ -127,7 +126,9 @@ mssql = class {
 			select -1 as Result,('事务失败,'+ ERROR_MESSAGE()) as Msg
 		END CATCH  
  		*/
-		sql = string.replace(sql,"\{sql\}", string.join(tsql,'\r\n')); 
+ 		var str = (type.table == type(tsql)) ? string.join(tsql,'\r\n') : tsql;
+ 		if( ... ) str = sqlServer.formatSqlParameters(str, ...);
+		sql = string.replace(sql,"@{sql}", str);
 		var tab,err = this.getTable(sql);
 		if(!tab) return null,err;
 		if(tab[1]["Result"] == 1) return true; 
@@ -232,7 +233,7 @@ carl.mssql() = !mssql.
 !mssql.getTable(sql) = 返回查询结果集table对像\n每个元素代表一行,每行由N个键值对列组成,键fields为列名结果集
 !mssql.getTableFirst(sql) = 执行SQL,返回第一条记录,空记录返回空table对像
 !mssql.exec(sql) = 执行sql,成功返回ture,失败返回null,err
-!mssql.transaction(tab) = 事务执行多个sql语句,参数table对像,成功返回ture,失败返回null,err,说明:全部执行成功,或全部失败
+!mssql.transaction(tab) = 事务执行多个sql语句,参数table对像或sql语句,成功返回ture,失败返回null,err,说明:全部执行成功,或全部失败
 !mssql.storedProcedures(name) = 执行存储过程,参数1:存储过程名称,参数2以后,是传存储过程函数参数(参数只能是字符型)
 !mssql.close() = 关闭连接
 end intellisense**/

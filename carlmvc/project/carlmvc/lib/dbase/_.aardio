@@ -96,12 +96,13 @@ getTableFirst = function(dbconfig, sql, ... ){
 	return t,err,sql;
 }
 
-getTables = function(dbconfig, tsql ){//执行多个select语句,参数table对像
+getTables = function(dbconfig, tsql, ... ){//执行多个select语句,参数table对像
 	var connection,err = connect(dbconfig);
 	if(!connection) return null,err;
 	var tab,err,sql = {};
 	for(i=1;#tsql;1){
 		sql = tsql[i];
+		if( ... ) sql = formatSqlParameters(dbconfig, sql, ...);
 		var bool,sqlerr = sqlBefore(sql)
 		if( bool === false) return false,sqlerr;
 		var t,e = connection.getTable(sql);
@@ -120,13 +121,14 @@ getTables = function(dbconfig, tsql ){//执行多个select语句,参数table对�
 	return tab,err,sql;
 }
 
-transaction = function(dbconfig, tsql ){//事务执行，参数table对像
+transaction = function(dbconfig, tsql, ... ){//事务执行，参数table对像
 	var connection,err = connect(dbconfig);
 	if(!connection) return null,err;
-	var sql = ..string.join(tsql,'\r\n');
+	var sql = (type.table == type(tsql)) ? ..string.join(tsql,'\r\n') : tsql;
+	if( ... ) sql = formatSqlParameters(dbconfig, sql, ...);
 	var bool,sqlerr = sqlBefore(sql)
 	if( bool === false) return false,sqlerr;
-	var ok,err = connection.transaction( tsql );
+	var ok,err = connection.transaction( sql );
 	if(!dbconfig.cache){
 		connection.close();
 		connection = null;
