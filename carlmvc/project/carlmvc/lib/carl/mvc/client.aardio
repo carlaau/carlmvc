@@ -89,7 +89,7 @@ client = class {
 			var ok;
 			ok,controller,err = call(controllerFunc,,funcName,controllerPath);
 			if(!ok) return this.errlog(controller);
-			if( !controller ) return this.errlog(err);
+			if( !controller ) return this.loadActionAfter(, controllerPath, funcName, ,err);
 			if( type.table != type(controller) ) return this.errlog(string.format('"%s" controller,构造函数ctor:返回值不是table对像',controllerFunc.nameSpace)); 
 		}
 		else {
