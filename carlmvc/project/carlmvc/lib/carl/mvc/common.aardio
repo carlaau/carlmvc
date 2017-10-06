@@ -93,7 +93,9 @@ saveErrorLog = function(err,sql){
 	if(#sql) table.push(tab,string.concat("[Sql]:",sql));
 	err = string.replace(string.trim(err),'\n','\r\n');
 	table.push(tab,string.concat("[Error]:",err));
-	var ok,err = call(..fsys.log.print,,string.join(tab,'\r\n'))
+	var str = string.join(tab,'\r\n');
+	if( !string.isUtf8(str) ) str = string.fromto(str,0,65001);
+	var ok,err = call(..fsys.log.print,,str)
 	if(!ok) ..print(..MVC_LOG_DIR,"目录没有读写权限<br>")
 }
 
@@ -108,19 +110,17 @@ printlog = function(...){
 
 self["error"] = function(err,debug,code){
 	if(!..request || !#err) return ;
-	var str = '<!doctype html><html><head><meta charset="utf-8"></head><body><pre>\n' ++ err ++ '\n</pre></body></html>';
+	if(code != 404) saveErrorLog(err);
+	var str = '<!doctype html><html><head><meta charset="utf-8"></head><body><pre>\n' ++ err ++ '\n</pre></body></html>';	
+	if( ..MVC_ROOT_DIR ) str = string.replace(str,"@" ++ ..MVC_ROOT_DIR,"");
 	if(debug){
-		saveErrorLog(err);
-		str = string.replace(str,"@" ++ ..request.documentRoot,"");
 		..response.write(str);
 		..response.close();
 	}
 	elseif(code){
-		if(code != 404) saveErrorLog(err);
 		..response.errorStatus(code);
 	}
 	else {
-		saveErrorLog(err);
 		..response.error(str);
 	}
 }
