@@ -86,10 +86,11 @@ client = class {
 
 		var controller;
 		if( type(controllerFunc) == type.class ){//控制器支持class类库
-			var ok;
-			ok,controller,err = call(controllerFunc,,funcName,controllerPath);
-			if(!ok) return this.errlog(controller);
-			if( !controller ) return this.loadActionAfter(, controllerPath, funcName, ,err);
+			var tc = { call(controllerFunc,,funcName,controllerPath) };
+			if(!tc[1]) return this.errlog(tc[2]);
+			table.remove(tc);
+			controller = tc[1];
+			if( !controller ) return this.loadActionAfter(,controllerPath,funcName, table.unpackArgs(tc));		
 			if( type.table != type(controller) ) return this.errlog(string.format('"%s" controller,构造函数ctor:返回值不是table对像',controllerFunc.nameSpace)); 
 		}
 		else {
@@ -165,6 +166,10 @@ client = class {
 	}
 	
 	loadActionAfter = function(controller, controllerPath, funcName, ...){
+		this.defaultResponse(...);
+	}
+	
+	defaultResponse = function(...){
 		var tab,err = ...;
 		if( tab === null && err === null ) return ;
 		var t;
@@ -186,7 +191,7 @@ client = class {
 			t = ..web.json.stringify(t,false,false);
 		}
 		..print(t);
-	}
+	}	
 
 	errlog = function(err,code){
 		if( !#err ) return ;

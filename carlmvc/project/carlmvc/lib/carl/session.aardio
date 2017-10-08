@@ -1,6 +1,4 @@
 ﻿
-import fsys;
-
 namespace carl
 
 class session{
