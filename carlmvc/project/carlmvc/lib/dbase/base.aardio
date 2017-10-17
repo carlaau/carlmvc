@@ -88,7 +88,9 @@ base = class {
 		else {
 			return null,"参数错误";
 		}
-		for(k in tab) if( string.lower(k) == string.lower(this.tableKeyId) ) tab[k] = null;
+		if( this.tableKeyIdIsAuto ){
+			for(k in tab) if( string.lower(k) == string.lower(this.tableKeyId) ) tab[k] = null;
+		}
 		var tabSave,err = this.getFields(tab,tabName);
 		if(!tabSave) return null,err; 
 		if(tabwhere) where = this.formatSqlParameters(where,tabwhere);

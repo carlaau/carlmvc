@@ -9,7 +9,7 @@ client = class {
 		this.client = web.rest.client( ... );
 		this.client._http.addHeaders = "Accept-Encoding:gzip, deflate";
 		
-		this.client.stringifyRequestParameters = function(postdata,utf8){
+		this.client.afterStringifyRequestParameters = function(postdata){
 			if( # this.rsaPublicKey ){
 				postdata,err = carl.rsa.encrypt(postdata, this.rsaPublicKey);
 				if( !postdata )	error('加密错误: ' ++ (err:""),2);

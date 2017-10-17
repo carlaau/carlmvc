@@ -150,7 +150,7 @@ client = class {
 		}
 
 		if( this.loadActionBefore ){
-			var ok,err = this.loadActionBefore(controller, controllerPath, funcName);
+			var ok,err = this.loadActionBefore(controller, controllerPath, funcName, table.unpackArgs(tParam));
 			if( ok === false ) return this.errlog(err);
 		}
 
