@@ -23,7 +23,7 @@ reply = function(t,func){
 	}
 	if(type.function != type(func)) return ; 
 	var min,max = table.range(t);
-	var tab = { call(func,,table.unpack(t,2,len)) };
+	var tab = { call(func,,table.unpack(t,2,max)) };
 	var ok,err = tab[1],tab[2];
 	if( !ok ){
 		if(#err) ..mvcapp.errlog('rpcCtl,function: ' ++ funcName ++ ' Run Error.\r\n' ++ err);
