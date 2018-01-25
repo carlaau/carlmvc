@@ -128,6 +128,17 @@ base = class {
 		return null,err;
 	}
 	
+	getAutoId = function(tabName){//获取自增ID
+		if(!#tabName){
+			if( !#this.tableName ) return null,"请指定表名";
+			if( this.tableKeyIdIsAuto ) return null,"当前表是自增主键";
+			tabName = this.tableName;
+		}
+		var t,err = this.storedProcedures("sp_get_auto_id",tabName);
+		if(t && #t) return t[1]["id"];
+		return null,err;
+	}
+	
 	insert = function(tab, bool){
 		if( !this.tableKeyIdIsAuto ){
 			var keyId,err = this.tableKeyId;
@@ -222,11 +233,12 @@ dbase.base() = !dbaseBase.
 !dbaseBase.getUpdateSql("表名", tab, where, 格式化参数table) = 返回更新SQL语句\n参数:表名, table对像,where条件,格式化参数table\n参数四 可省略\n参数二格式:{字段1="值1";字段2="值2"}\n格式化参数是一个table表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.formatSqlParameters(sql,格式化参数) = 格式化sql\n参数:sql语句,格式化参数\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.getPageList(tabPage,mainSql,orderby,where) = 分页查询,参数:分页条件table对像,主SQL,排序SQL语句,where条件\n具体用法请查看dbase.page分页库\n成功返回分页table记录集,失败返回null,err,sql
+!dbaseBase.getAutoId("表名") = 获取指定表主键ID值,\n需自己实现sp_get_auto_id存储过程
 <-base end->
 <-table->
 !dbaseBase.getInsertSql(tab) = 操作当前表\n返回新增SQL语句\n参数:table对像 格式:{字段1="值1";字段2="值2"}
 !dbaseBase.getUpdateSql(tab, where, 格式化参数table) = 操作当前表\n返回更新SQL语句\n参数:table对像,where条件,格式化参数table\n参数一格式:{字段1="值1";字段2="值2"}\n参数三 可省略\n格式化参数是一个table表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
-!dbaseBase.getAutoId() = 操作当前表\n获取自主管理主键ID,仅当 tableKeyIdIsAuto=false 有效,即自主管理主键ID,非自增才可调用
+!dbaseBase.getAutoId() = 操作当前表\n获取自主管理主键ID,仅当 tableKeyIdIsAuto=false 有效,即自主管理主键ID,非自增才可调用\n需自己实现sp_get_auto_id存储过程
 !dbaseBase.insert(tab) = 操作当前表\n新增一条记录\n成功返回ture,失败返回null,err,sql\n参数:table对像 格式:{字段1="值1";字段2="值2"}
 !dbaseBase.insert(tab,true) = 操作当前表\n新增一条记录\n成功返回自增ID,失败返回null,err,sql\n参数:table对像 格式:{字段1="值1";字段2="值2"}
 !dbaseBase.update(tab, where, 格式化参数table) = 操作当前表\n更新记录\n成功返回ture,失败返回null,err,sql\n参数:table对像,where条件,格式化参数table\n参数一格式:{字段1="值1";字段2="值2"}\n参数三可省略\n格式化参数是一个table表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符

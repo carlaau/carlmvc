@@ -18,12 +18,15 @@ client = class {
 		}
 		
 		this.client.parseResponseResult = function( html ){
-			var tab;
-			try{
-				tab = web.json.parse(html);
+			var r,tab;
+			if(string.left(html,4) == "{[1]"){
+				r,tab = call(eval,,html);
 			}
-			if( type(tab) == type.table ){
-				carl.rpc.unformat(tab);
+			else {
+				r,tab = call(web.json.parse,,html);
+				if(r) carl.rpc.unformat(tab);
+			}
+			if(r){
 				return table.unpackArgs(tab);
 			}
 			else {
