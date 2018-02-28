@@ -44,7 +44,7 @@ mssql = class {
         	table.push( result,row );
         	rs.movenext();
         }
-		
+		rs.close();
 		return result;
 	}
 	
@@ -91,7 +91,7 @@ mssql = class {
         		row = {};
         		if(!rs.eof){
         			var v;
-        			for(i,name in fields){         				
+        			for(i,name in fields){ 
         				v = rs( i-1 ).value;
         				if( type( v ) == "string" ) v = trim(v);
         				elseif(..time.istime(v)){//增加时间判断
@@ -101,7 +101,8 @@ mssql = class {
         				if(#name) row[name] = v;
         				else row[i] = v;
         			}
-        		}      		
+        		}
+        		rs.close();     		
 			}
 		}
 		catch(e){

@@ -19,7 +19,8 @@ client = class {
 		
 		this.client.parseResponseResult = function( html ){
 			var r,tab;
-			if(string.left(html,4) == "{[1]"){
+			var l = string.left(html,4);
+			if( string.find(l,"\{\[\d\]") ){
 				r,tab = call(eval,,html);
 			}
 			else {

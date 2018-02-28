@@ -91,7 +91,7 @@ saveErrorLog = function(err,sql){
 		}
 	}
 	if(#sql) table.push(tab,string.concat("[Sql]:",sql));
-	err = string.replace(string.trim(err),'\n','\r\n');
+	err = string.replace(string.trim(err:""),'\n','\r\n');
 	table.push(tab,string.concat("[Error]:",err));
 	var str = string.join(tab,'\r\n');
 	if( !string.isUtf8(str) ) str = string.fromto(str,0,65001);
