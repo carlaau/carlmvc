@@ -11,12 +11,6 @@
 
 //[数据库配置文件,支持多个数据库]
 
-import carl.mssql;
-import carl.mysql;
-import carl.oracle;
-import carl.sql;
-import dbase;
-
 namespace config.database
 
 /*
