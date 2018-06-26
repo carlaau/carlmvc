@@ -32,6 +32,9 @@ getWhereSql = function(tabRules){
 				where += " and " ++ fieldName ++ " between '" ++ date1 ++ "' and '" ++ date2 ++ "'";
 			}
 		}
+		elseif(t.op == "in"){
+			where += " and " ++ fieldName ++ " in(" ++ data ++ ")";
+		}
 	}
 	return where; 
 }
