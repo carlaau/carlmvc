@@ -82,6 +82,45 @@ getSysNoEx = function(ex="",n=3){//生成编号 年月日时分秒
 	return nowtime; 
 }
 
+fileMime  = {
+    ["html"] = "text/html";
+    ["css"] = "text/css";
+    ["xml"] = "text/xml";
+    ["xhtml"] = "application/xhtml+xml";
+    ["js"] = "application/x-javascript";
+    ["txt"] = "text/plain"; 
+    ["rtf"] = "application/rtf";
+    ["pdf"] = "application/pdf";
+    ["ppt"] = "application/vnd.ms-powerpoint ";  
+    ["doc"] = "application/msword"; 
+    ["bmp"] = "application/x-MS-bmp"; 
+    ["png"] = "image/png"; 
+    ["gif"] = "image/gif"; 
+    ["jpg"] = "image/jpeg"; 
+    ["avi"] = "video/x-msvideo";
+    ["mid"] = "audio/midi";
+    ["midi"] = "audio/x-midi";
+    ["mpg"] = "video/mpeg";
+    ["mp3"] = "audio/x-mpeg";
+    ["swf"] = "application/x-shockwave-flash";
+    ["mp4"] = "video/mp4";
+    ["wmv"] = "video/x-ms-wmv";
+    ["zip"] = "application/zip";
+    ["gz"] = "application/x-gzip";
+    ["7z"] = "application/x-7z-compressed";
+    ["lzma"] = "application/x-lzma";
+    ["tar"] = "application/x-tar";
+    ["rar"] = "application/x-rar-compressed";
+} 
+
+getExtName = function(mime){
+    mime = string.lower(mime);
+	for(ext,fmime in fileMime){
+		fmime = string.lower(fmime);
+		if(fmime == mime) return ext; 
+	}
+}
+
 uploadFile = function(){//获取上传附件路径
 	var fileData = ..request.postFileData();
 	if(!fileData || !fileData.file) return null,"无附件数据";
@@ -92,8 +131,9 @@ uploadFile = function(){//获取上传附件路径
 	var dir = ..MVC_WWW_DIR ++ fileDir;
 	..fsys.createDir(dir);	
 	nowtime.format = "%H%M%S";
-	var ext = string.match(fileData.file.filename,"(\.\a+)$"):"";
-	var filename = tostring(nowtime) ++ ..string.random(4) ++ ext;
+	var ext = getExtName(fileData.file.contentType);
+	if(!ext) return null,"不支持上传的文件类型"; 
+	var filename = tostring(nowtime) ++ ..string.random(4) ++ "." ++ ext;
 	var savename = dir ++ "/" ++ filename;
 	var fileurl = fileDir ++ "/" ++ filename;
 	var ok,err = fileData.file.save(savename);
