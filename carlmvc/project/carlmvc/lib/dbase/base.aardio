@@ -119,15 +119,7 @@ base = class {
 		}
 		return tab;
 	}
-	
-	getAutoId = function(){//获取自增ID
-		if( !#this.tableName ) return null,"请指定表名";
-		if( this.tableKeyIdIsAuto ) return null,"当前表是自增主键"; 
-		var t,err = this.storedProcedures("sp_get_auto_id",this.tableName);
-		if(t && #t) return t[1]["id"];
-		return null,err;
-	}
-	
+
 	getAutoId = function(tabName){//获取自增ID
 		if(!#tabName){
 			if( !#this.tableName ) return null,"请指定表名";
@@ -137,6 +129,17 @@ base = class {
 		var t,err = this.storedProcedures("sp_get_auto_id",tabName);
 		if(t && #t) return t[1]["id"];
 		return null,err;
+	}
+	
+	getSystemNo = function(ex = "",n = 4, tableName){
+		tableName := this.tableName : "";
+		var nowDate = tostring(..time(,"%Y%m%d"));
+		tableName += nowDate;
+		var t,err = this.storedProcedures("sp_get_auto_id",tableName);
+		if(!t || !#t) return null,"编码生成失败" ++ (err:"");
+		var id = string.format("%0" ++ n ++ "i",t[1]["id"]);
+		var sysNo = string.concat(ex,nowDate,id);
+		return sysNo;
 	}
 	
 	insert = function(tab, bool){
@@ -234,6 +237,7 @@ dbase.base() = !dbaseBase.
 !dbaseBase.formatSqlParameters(sql,格式化参数) = 格式化sql\n参数:sql语句,格式化参数\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.getPageList(tabPage,mainSql,orderby,where) = 分页查询,参数:分页条件table对像,主SQL,排序SQL语句,where条件\n具体用法请查看dbase.page分页库\n成功返回分页table记录集,失败返回null,err,sql
 !dbaseBase.getAutoId("表名") = 获取指定表主键ID值,\n需自己实现sp_get_auto_id存储过程
+!dbaseBase.getSystemNo(ex,4,tableName) = 按日期生成系统自增编码\n参数:编码前缀,至少保留几位数字,标识符\n需自己实现sp_get_auto_id存储过程
 <-base end->
 <-table->
 !dbaseBase.getInsertSql(tab) = 操作当前表\n返回新增SQL语句\n参数:table对像 格式:{字段1="值1";字段2="值2"}
@@ -245,5 +249,6 @@ dbase.base() = !dbaseBase.
 !dbaseBase.delete(where, 格式化参数) = 操作当前表\n删除记录\n成功返回ture,失败返回null,err,sql\n参数:where条件,格式化参数\n参数二可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.getFirstList(where, 格式化参数) = 操作当前表\n成功返回where条件查询结果的第一条记录,失败返回null,err,sql\n参数:where条件,格式化参数\n参数二 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.getAllList(where, 格式化参数) = 操作当前表\n成功返回where条件所有查询结果记录集,失败返回null,err,sql\n参数:where条件,格式化参数\n参数二 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
+!dbaseBase.getSystemNo(ex,4) = 按日期生成当前表自增编码\n参数:编码前缀,至少保留几位数字,\n需自己实现sp_get_auto_id存储过程
 <-table end->
 end intellisense**/

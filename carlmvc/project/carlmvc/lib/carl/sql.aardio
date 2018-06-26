@@ -92,8 +92,9 @@ namespace my{
 		t[#t] = "";
 		table.push(t,")values(");
 		for k,v in table.eachName(tab){
-			if(type(v) == type.string){
+			if(type(v) == type.string){				
 				v = string.str(v);
+				v = string.replace(v,"@\","\\");
 				if(string.lower(v) == "now()" || v === "NULL"){				
 					table.push(t,v,",");
 				}else {
@@ -118,6 +119,7 @@ namespace my{
 		for k,v in table.eachName(tab){
 			if(type(v) == type.string){
 				v = string.str(v);
+				v = string.replace(v,"@\","\\");
 				if(string.lower(v) == "now()" || v === "NULL"){
 					table.push(t,k,"=",v,",")
 				}

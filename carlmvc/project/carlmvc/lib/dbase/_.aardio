@@ -119,11 +119,11 @@ getTables = function(dbconfig, tsql, ... ){//执行多个select语句,参数tabl
 transaction = function(dbconfig, tsql, ... ){//事务执行，参数table对像
 	var connection,err = connect(dbconfig);
 	if(!connection) return null,err;
-	var sql = (type.table == type(tsql)) ? ..string.join(tsql,'\r\n') : tsql;
+	var sql = (type.table == type(tsql)) ? ..string.join(tsql,';\r\n') : tsql;
 	if( ... ) sql = formatSqlParameters(dbconfig, sql, ...);
 	var bool,sqlerr = sqlBefore(sql)
 	if( bool === false) return false,sqlerr;
-	var ok,err = connection.transaction( sql );
+	var ok,err = connection.transaction( tsql );
 	if(!dbconfig.cache){
 		connection.close();
 		connection = null;
