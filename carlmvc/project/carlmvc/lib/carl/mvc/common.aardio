@@ -150,10 +150,15 @@ bindModel = function(tpost,tabModel){
 				value = string.trim(value);
 			}
 			case "number" {
-				if(type(value) != type.number){
+				if(type(value) != type.number && isBool){
 					value = tostring(value);
+					value = string.trim(value);
+					value = string.replace(value,",","");
 					var num,len = tonumber(value);
 					value = (#value == len) ? num : null;
+					if(value === null && model.required){
+						return false,model.name ++ " 不是有效数字！";
+					}
 				}
 			}
 			case "datetime","date" {
