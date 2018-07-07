@@ -150,8 +150,8 @@ bindModel = function(tpost,tabModel){
 				value = string.trim(value);
 			}
 			case "number" {
-				if(type(value) != type.number && isBool){
-					value = tostring(value);
+				if(type(value) != type.number){
+					value = tostring(value:"");
 					value = string.trim(value);
 					value = string.replace(value,",","");
 					var num,len = tonumber(value);
