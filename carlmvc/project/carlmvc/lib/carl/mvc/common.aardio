@@ -135,12 +135,12 @@ bindModel = function(tpost,tabModel){
 		var key = model.key;
 		if(!#key) continue ;
 		var value = tabCheck[string.lower(key)];
-		var isBool = (value !== null && value != "");//是否有值
-		if(!isBool && model.default){
+		var isValue = (value !== null && value != "");//是否有值
+		if(!isValue && model.default){
 			value = model.default;
 		}
-		isBool = (value !== null && value != "");
-		if(model.required && !isBool){
+		isValue = (value !== null && value != "");
+		if(model.required && !isValue){
 			return false,model.name ++ " 必填！";
 		}
 		var typeof = model.typeof : "string";
@@ -151,18 +151,18 @@ bindModel = function(tpost,tabModel){
 			}
 			case "number" {
 				if(type(value) != type.number){
-					value = tostring(value:"");
+					value = tostring(value);
 					value = string.trim(value);
 					value = string.replace(value,",","");
 					var num,len = tonumber(value);
 					value = (#value == len) ? num : null;
-					if(value === null && model.required){
-						return false,model.name ++ " 不是有效数字！";
+					if(model.required && value === null){
+						return false,model.name ++ " 值不是有效数字";
 					}
 				}
 			}
 			case "datetime","date" {
-				if(isBool){
+				if(isValue){
 					var format = (typeof=="date") ? "%Y-%m-%d" : "%Y-%m-%d %H:%M:%S";
 					var date;
 					try{
