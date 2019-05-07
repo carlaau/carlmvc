@@ -24,8 +24,10 @@ import dbase;
 
 printlog = carl.mvc.common.printlog;
 
-// 加载carlmvc框架配置
-loadcodex(MVC_ROOT_DIR ++ "carlmvc\config.aardio");
+var path = MVC_ROOT_DIR ++ "carlmvc\config.aardio";
+table.insert(MVC_LOG_RUN_DATA,path);
+loadcodex(path);//加载carlmvc框架配置
 
-//加载carlmvc框架基础文件
-loadcodex(MVC_CARLMVC_DIR ++ "base.aardio");
+path = MVC_CARLMVC_DIR ++ "base.aardio";
+table.insert(MVC_LOG_RUN_DATA,path);
+loadcodex(path);//加载carlmvc框架基础文件

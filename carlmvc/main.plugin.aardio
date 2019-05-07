@@ -18,4 +18,5 @@ try{
 catch(e){
 	console.log(e)
 }
+
 win.loopMessage();

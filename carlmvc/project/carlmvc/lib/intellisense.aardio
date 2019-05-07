@@ -10,6 +10,7 @@ MVC_CONFIG_DIR = mvc系统配置文件目录,指\config\ 目录
 MVC_LOG_DIR = mvc系统日志目录,指\log\ 目录
 MVC_LOG_ERROR_PATH = mvc系统错误日志文件,指\log\error.log文件
 MVC_WWW_DIR = web网站目录,指\www\ 目录
+MVC_LOG_RUN_DATA = mvc运行轨迹日志,记录从请求开始到结束执行过程,table对象
 
 config.webconfig = 网站配置
 config.webconfig.adminLoginUrl = 后台登录页面,主要用于没有登录,跳转到登录页面

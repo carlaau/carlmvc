@@ -10,70 +10,82 @@
 // +----------------------------------------------------------------------
 
 import web.json;
+import carl.mvc.view;
 namespace carl.mvc
 
 client = class {
-	ctor( mvcname = "mvc", tabConfig){
+	ctor( mvcname = "mvc", tabConfig, tabMvcLogRunData){
 		this.mvcname = mvcname;
 		this.webpath = tabConfig.webpath;
 		this.appdir = tabConfig.appdir;//mvc应用所在目录
 		this.debug = tabConfig.debug;
 		this.configController = tabConfig.controller : defaultConfig.controller;
 		this.configView = tabConfig.view : defaultConfig.view;
+		tabMvcLogRunData := {};
 	};
 	
-	loadController = function(controllerPath){
-		if( !#controllerPath ) return ; 
+	loadController = function(controllerPath){		
+		if( !#controllerPath ) return this.errlog("Controller Path NULL",404);		
+		var controllerDir,controllerName = ..string.match(controllerPath,"([\w\.]*?)\.?(\w+)$");
+		if(!controllerName) return this.errlog(..string.format('404 Not Found "%s" Controller Path.', controllerPath),404);
 		
 		if( this.loadControllerBefore ){
 			var ok,err = this.loadControllerBefore(controllerPath);
 			if( ok === false ) return false,err;
 		}
-		
-		var tabCtl = this.configController;
-		var controllerDir,controllerName = string.match(controllerPath,"([\w\.]*?)\.?(\w+)$");
-		if(!controllerName) return null,string.format('404 Not Found "%s" controller path.', controllerPath),404;
+		var ctlPathFile = this.fullControllerPath(controllerPath);
+		..table.insert(tabMvcLogRunData,ctlPathFile);
+		if(!..io.exist(ctlPathFile)) return this.errlog(..string.format('404 Not Found "%s" Controller File.', ctlPathFile),404);
 
-		var ctldir = string.replace(tabCtl.dir,"\/","\");
-		if(#controllerDir){
-			controllerDir = string.trim(controllerDir,".");
-			controllerDir = string.replace(controllerDir,"\.","\");
-			ctldir += controllerDir ++ "\";
-		}
+		var t,err = ..carl.mvc.common.loadcodeCall(ctlPathFile);
+		if(!t) return this.errlog(err); 
 
-		var ctlPath = string.concat(ctldir,controllerName,tabCtl.ext,".aardio");
-		if(!..io.exist(ctlPath)) return null,string.format('404 Not Found "%s" controller file.', ctlPath),404;
+		var ctlspace = ..string.concat(this.configController.nameSpace,".",controllerPath);
+		var controller,,cspace = ..carl.mvc.common.getByNamespace(ctlspace,,true);
+		if( !controller ) return this.errlog(..string.format('Failed to import "%s" controller namespace.', ctlspace));
+		controller.ctlSpace = ctlspace;
+		controller.ctlPathFile = ctlPathFile;
 
-		var tabController = {};	
-		var f,err = loadcode(ctlPath);
-		if(!f) return null,err;
-
-		var ok,err = call(f,tabController);
-		if( !ok ) return null,err; 
-
-		var ctlspace = string.concat(tabCtl.nameSpace,".",controllerPath);
-		var controller,,cspace = getByNamespace(ctlspace,,true);
-		if( !controller ) return null,string.format('Failed to import "%s" controller namespace.', ctlspace);
-		controller.nameSpace = cspace;
-		controller.ctlPathFile = ctlPath;
-		
 		if( this.loadControllerAfter ){
 			var ok,err = this.loadControllerAfter(controller, controllerPath);
 			if( ok === false ) return false,err;
 		}
-		
 		return controller;
 	}
 	
 	loadControllerAction = function(method){
+		method = ..string.trim(method:"");
 		if( !#method ) return ; 
-		method = string.trim(method);
-		var controllerPath,funcName = string.match(method,"([\w\.]+?)\.(\w+)$");
-		if( !funcName ) return this.errlog(string.format('404 Not Found "%s" controller action path.', method),404);
+		var controllerPath,actionName = ..string.match(method,"([\w\.]+?)\.(\w+)$");
+		if( !actionName ) return this.errlog(..string.format('404 Not Found "%s" controller action path.', method),404);
 		
-		var controllerFunc,err,code = this.loadController(controllerPath);
-		if( controllerFunc === false ) return this.errlog(err);
-		if( !controllerFunc ) return this.errlog(err,code);
+		..request.post := {};
+		var tParam = {};
+		if( ..string.startWith(..request.contentType:"","application/json",true) ){
+			var postdata = ..string.trim(..request.postData():"");
+			if( postdata[1] == '{'# || postdata[1] == '['# ){
+				var err;
+				tParam[1],err = ..web.json.tryParse(postdata);
+				if(type(tParam[1]) != type.table) return this.errlog(err);
+			}
+		}
+		var ctlPathFile = this.fullControllerPath(controllerPath);
+		if(!..io.exist(ctlPathFile)) return this.errlog(..string.format('404 Not Found "%s" Controller File.', ctlPathFile),404);
+		var t,err = getMethodParameters(ctlPathFile,actionName);
+		if(!t) return this.errlog(..string.format('controller path: "%s",Error: "%s"', ctlPathFile,err));
+		for(i=#tParam+1;#t;1){
+			var param = ..string.lower(t[i]);
+			tParam[i] = ..request.get[param] : ..request.post[param];
+		}
+		this.action(actionName, controllerPath, ..table.unpackArgs(tParam));
+		if(..carl.session.close) ..carl.session.close();
+	}
+
+	action = function(actionName,controllerPath,...){
+		if(!#actionName || !#controllerPath ) return this.errlog("Action Param NULL",404);
+		var controllerFunc,err = this.loadController(controllerPath);
+		if( controllerFunc === false ) return false,err;
+		if( !controllerFunc ) return;
 
 		controllerFunc.string = ..string;
 		controllerFunc.table = ..table;
@@ -86,83 +98,45 @@ client = class {
 
 		var controller;
 		if( type(controllerFunc) == type.class ){//控制器支持class类库
-			var tc = { call(controllerFunc,,funcName,controllerPath) };
-			if(!tc[1]) return this.errlog(tc[2]);
-			table.remove(tc);
+			var tc = { call(controllerFunc,,actionName,controllerPath) };
+			if(!tc[1]) return tc[2] ? this.errlog(tc[2]);
+			..table.remove(tc);
 			controller = tc[1];
-			if( !controller ) return this.loadActionAfter(,controllerPath,funcName, table.unpackArgs(tc));		
-			if( type.table != type(controller) ) return this.errlog(string.format('"%s" controller,构造函数ctor:返回值不是table对像',controllerFunc.nameSpace)); 
+			if( !controller ) return this.loadActionAfter(,controllerPath,actionName, ..table.unpackArgs(tc));		
+			if( type.table != type(controller) ) return this.errlog(..string.format('"%s" controller,构造函数ctor:返回值不是table对像',controllerFunc.ctlSpace)); 
+			controller.ctlPathFile = controllerFunc.ctlPathFile;
+			controller.ctlSpace = controllerFunc.ctlSpace;
 		}
 		else {
 			controller = controllerFunc;
 		}
-
-		var func,,fname = getByNamespace(funcName,controller,true);
-		if( type.function != type(func) ) return this.errlog(string.format('404 Not Found "%s" action in "%s" controller.', funcName,controllerFunc.nameSpace),404);
-		funcName = fname;
 		
-		controller.view = {};
-		controller.view.loadcode = function(viewpath, ...){
-			var filename = string.replace(viewpath,"\.","\");
-			
-			var tView = this.configView;
-			var viewFullPath = string.concat(tView.dir,filename,tView.ext,".aardio");
-			
-			if( !..io.exist(viewFullPath) ) return this.errlog(string.format('Not Found "%s" view file.', viewFullPath));
-			
-			if( this.loadViewBefore ){
-				var ok,err = this.loadViewBefore(controller, controllerPath, funcName, viewpath, viewFullPath);
-				if( ok === false ) return this.errlog(err);
-			}
-			
-			var f,err = loadcode(viewFullPath);
-			if(!f) return this.errlog(err);
+		..table.insert(tabMvcLogRunData,..string.concat("Action Name: ",actionName,"=function()"));
+		var func,,fname = ..carl.mvc.common.getByNamespace(actionName,controller,true);
+		if( type.function != type(func) ) return this.errlog(..string.format('404 Not Found "%s" action in "%s" controller.', actionName,controllerFunc.ctlSpace),404);
+		actionName = fname;
 
-			var t = { call(f,controller,...) };
-			var ok,err = t[1],t[2];
-			if( !ok ) return this.errlog(err);
-			table.remove(t);
-			if( this.loadViewAfter ) this.loadViewAfter(controller, controllerPath, funcName, viewpath, viewFullPath, table.unpackArgs(t));
-			return table.unpackArgs(t);
-		}
-
-		var tParam = {};
-		if( string.startWith(..request.contentType:"","application/json",true) ){
-			var postdata = string.trim(..request.postData():"");
-			if( postdata[1] == '{'# || postdata[1] == '['# ){
-				try{
-					tParam[1] = ..web.json.parse(postdata);
-				}
-				catch(e){
-					err = e;
-				}
-				if(!tParam[1]) return this.errlog(err);
-			}
-		}
+		controller.ctlActionName = actionName;
+		controller.ctlPath = controllerPath;
+		controller.viewbag := {};
+		controller.view = ..carl.mvc.view(this.configView,controller,tabMvcLogRunData);
+		controller.view.loadViewBefore = this.loadViewBefore;
+		controller.view.loadViewAfter = this.loadViewAfter;
+		controller.view.errlog = this.errlog;
 		
-		..request.post := {};
-		var len = #tParam;
-		var t,err = getMethodParameters(controllerFunc.ctlPathFile,funcName);
-		if(!t) return this.errlog(string.format('controller path: "%s",Error: "%s"', controllerFunc.ctlPathFile,err));
-		for(i=len+1;#t;1){
-			var param = string.lower(t[i]);
-			tParam[i] = ..request.get[param] : ..request.post[param];
-		}
-
 		if( this.loadActionBefore ){
-			var ok,err = this.loadActionBefore(controller, controllerPath, funcName, table.unpackArgs(tParam));
-			if( ok === false ) return this.errlog(err);
+			var ok,err = this.loadActionBefore(controller, controllerPath, actionName, ...);
+			if( ok === false ) return false,err;
 		}
-
-		var t = { call(func,controller,table.unpackArgs(tParam)) };
+		
+		var t = { call(func,controller,...) };
 		var ok,err = t[1],t[2];
 		if( !ok ){
-			if(#err) err = string.format('controller: "%s",action: "%s" Run Error.\r\n' ++ err, controllerFunc.nameSpace,funcName);
+			if(#err) err = ..string.format('controller: "%s",action: "%s" Run Error.\r\n' ++ err, controllerFunc.ctlSpace,actionName);
 			return this.errlog(err);
 		}
-		table.remove(t);
-		this.loadActionAfter(controller, controllerPath, funcName, table.unpackArgs(t));
-		if(..carl.session.close) ..carl.session.close();
+		..table.remove(t);
+		this.loadActionAfter(controller, controllerPath, actionName, ..table.unpackArgs(t));
 	}
 	
 	loadActionAfter = function(controller, controllerPath, funcName, ...){
@@ -191,20 +165,25 @@ client = class {
 			t = ..web.json.stringify(t,false,false);
 		}
 		..print(t);
-	}	
+	}
 
 	errlog = function(err,code){
-		if( !#err ) return ;
+		if(err === null) return; 
+		if(code != 404) err = ..string.concat("Error: ",err,'\n',..string.join(tabMvcLogRunData,'\n'));
 		..carl.mvc.common.error(err,this.debug,code);
 	}
 	
-	urlAction = function(funcName,controller){
+	fullControllerPath = function(controllerPath = ""){
+		return ..carl.mvc.common.fullMvcPath(controllerPath,this.configController.dir,this.configController.ext);
+	}
+	
+	urlAction = function(actionName,controller){
 		var url = this.webpath ++ "?_method=";
 		if( controller ){
-			return string.concat(url,controller,".", funcName);
+			return ..string.concat(url,controller,".", actionName);
 		}
 		else {
-			return string.concat(url,funcName);
+			return ..string.concat(url,actionName);
 		}
 	}
 	
@@ -222,20 +201,17 @@ client = class {
 
 namespace client
 
-string = ..string;
-table = ..table;
-
 getMethodParameters = function(path,funcName){
-	var str = string.load(path);
-	if(string.left(str,7) == "=aardio") return null,"控制器代码不允许编译";
+	var str = ..string.load(path);
+	if(..string.left(str,7) == "=aardio") return null,"控制器代码不允许编译";
 	var params,n = "",0;
-	for param in string.gmatch(str,"\A" ++ funcName ++ "\s*\=\s*function\s*\((.*?)\)") { 
+	for param in ..string.gmatch(str,"\A" ++ funcName ++ "\s*\=\s*function\s*\((.*?)\)") { 
 		params = param;
 		n++;
 	}
 	if(n>1) return null,'不允许定义多个"' ++ funcName ++ '"函数'; 
-	params = string.replace(params,"\s+","");
-	return string.split(params,","); 
+	params = ..string.replace(params,"\s+","");
+	return ..string.split(params,","); 
 }
 
 defaultConfig = {
@@ -247,35 +223,14 @@ defaultConfig = {
 	view = {
 		dir = "\mvc\view\";
 		ext = "";
-		nameSpace = "mvc.view";
+		layoutPath = "";
 	}
 }
-
-getByNamespace = function(k,t,bool){
-	if(!t){ t = ..global; }
-	var p,m = ..string.match(k,"\.*(.+)(%\[\])$");
-	if( m )
-		m = eval(..string.trim(m,"[]"));
-	else
-		p,m = ..string.match(k,"\.*(.+)\.([^.]+)$");
-	if( m !== null ){ 
-		t = getByNamespace(p,t,bool); 
-		if(t){
-			if(bool) for(e in t){if(..string.lower(e)==..string.lower(m)){m=e;break;}}
-			return t[m],t,m;
-		} 
-	}
-	else{
-		if(bool) for(e in t){if(..string.lower(e)==..string.lower(k)){k=e;break;}}
-		return t[k],t,k; 
-	};
-};
 
 /**intellisense(carl.mvc)
 client = mvc库
 client("mvc", tabConfig) = 创建一个mvc应用,参数:mvc名,tabConfig
 client() = !carlmvc.
-getByNamespace = 与用法与table.getByNamespace一样,增加第三个参数,true忽略大写小
 end intellisense**/
 
 /**intellisense(!carlmvc)
@@ -312,6 +267,9 @@ errlog = @.errlog = function(err){
 loadcode("mvc\代码路径") = 用法与loadcode相同,参数只能是相对于\application\应用目录下的文件路径
 loadcodex("mvc\代码路径") = 用法与loadcodex相同,参数只能是相对于\application\应用目录下的文件路径
 urlAction(actionName,controllerPath) = 生成MVC访问完整的URL,参数:操作函数名,控制器路径名
+action() = 调用mvc控制器中的方法
+action( = 调用mvc控制器中的方法\n参数一:方法名称,指控制器中的函数名称\n参数二:控制器路径,带目录用.分隔,\n比如:mvc/controller/defaultCtl.aardio用"default"表示,\n带目录的mvc/controller/test/defaultCtl.aardio用"test.default"表示\n其余参数传给方法函数
+action(.("方法名称","控制器路径",->->->) = 调用mvc控制器中的方法\n参数一:方法名称,指控制器中的函数名称\n参数二:控制器路径,带目录用.分隔,\n比如:mvc/controller/defaultCtl.aardio用"default"表示,\n带目录的mvc/controller/test/defaultCtl.aardio用"test.default"表示\n其余参数传给方法函数
 configController = @.configController({
 		/*配置控制器*/
 		dir = "mvc\controller\";		/*控制器工作目录,是相对于\application\应用目录下*/
@@ -322,13 +280,9 @@ configView = @.configView({
 		/*配置视图*/
 		dir = "mvc\view\";		/*视图工作目录,是相对于\application\应用目录下*/
 		ext = "";				/*视图后缀*/
+		layoutPath = "";			/*布局模板文件路径*/
 	})
 logdir = @.logdir = ROOT_DIR ++ "log\";/*错误日志目录,请使用绝对路径,ROOT_DIR = carl.mvc.common.fullpath("..\")*/
 webpath = @.webpath = "/index.aardio";/*web网站访问入口文件,相对路径*/
 appdir = @.appdir = ROOT_DIR ++ "application\";/*mvc应用目录,请使用绝对路径,ROOT_DIR = carl.mvc.common.fullpath("..\")*/
-end intellisense**/
-
-/**intellisense()
-owner.view.loadcode( = 加载mvc视图,只能在控制器里调用\n参数:视图路径,参数\n用法与loadcodex类同\n说明:参数@1视图路径是相对于视图工作目录下,其他参数作为调用参数传给被调用的视图文件,\n在被调用视图文件中使用var a,b,c = ... 的格式获取\n如视图文件是\mvc\view\default\index.aardio,第一个参数只需写"default.index"
-owner.view.loadcode(.("视图路径",->->->) = 视图文件是\mvc\view\default\index.aardio,参数@1只需写"default.index"\n其他参数作为调用参数传给被调用的视图文件,\n在被调用视图文件中使用var a,b,c = ... 的格式获取
 end intellisense**/

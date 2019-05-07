@@ -112,7 +112,7 @@ self["error"] = function(err,debug,code){
 	if(!..request || !#err) return ;
 	if(code != 404) saveErrorLog(err);
 	var str = '<!doctype html><html><head><meta charset="utf-8"></head><body><pre>\n' ++ err ++ '\n</pre></body></html>';	
-	if( ..MVC_ROOT_DIR ) str = string.replace(str,"@" ++ ..MVC_ROOT_DIR,"");
+	if( ..MVC_ROOT_DIR ) str = string.replace(str,"@" ++ ..MVC_ROOT_DIR,"\");
 	if(debug){
 		..response.write(str);
 		..response.close();
@@ -154,8 +154,13 @@ bindModel = function(tpost,tabModel){
 					value = tostring(value);
 					value = string.trim(value);
 					value = string.replace(value,",","");
-					var num,len = tonumber(value);
-					value = (#value == len) ? num : null;
+					if(value === "0"){
+						value = 0;
+					}
+					else {
+						var num,len = tonumber(value);
+						value = (#value == len) ? num : null;
+					}
 					if(model.required && value === null){
 						return false,model.name ++ " 值不是有效数字";
 					}
@@ -187,6 +192,55 @@ bindModel = function(tpost,tabModel){
 	return tabNew; 
 }
 
+loadcodeCall = function(path,owners,...){		
+	var f,err = loadcode(path);
+	if(!f) return null,err;
+	var t = { call(f,owners,...) };
+	var ok,err = t[1],t[2];
+	if( !ok ) return null,err;
+	..table.remove(t);
+	return t;
+}
+
+fullMvcPath = function(mvcpath,mvcdir,ext){
+	if( ..string.endWith(mvcpath,".aardio",true) ) {			
+		if( ..string.startWith(mvcpath,"\" ++ ..MVC_APP_FILE,true) || 
+			..string.startWith(mvcpath,"/" ++ ..MVC_APP_FILE,true) || 
+			..string.startWith(mvcpath,..MVC_APP_FILE,true)){
+			mvcpath = ..io.joinpath(..MVC_ROOT_DIR,mvcpath);
+		}
+		elseif( !..string.startWith(mvcpath,..MVC_ROOT_DIR,true) ){
+			mvcpath = ..io.joinpath(mvcdir,mvcpath);
+		}
+	}
+	else {
+		mvcpath = ..string.replace(mvcpath,"\.","\");
+		mvcpath = ..string.concat(mvcpath,ext,".aardio");
+		mvcpath = ..io.joinpath(mvcdir,mvcpath);
+	}
+	return mvcpath;
+}
+
+getByNamespace = function(k,t,bool){
+	if(!t){ t = ..global; }
+	var p,m = ..string.match(k,"\.*(.+)(%\[\])$");
+	if( m )
+		m = eval(..string.trim(m,"[]"));
+	else
+		p,m = ..string.match(k,"\.*(.+)\.([^.]+)$");
+	if( m !== null ){ 
+		t = getByNamespace(p,t,bool); 
+		if(t){
+			if(bool) for(e in t){if(..string.lower(e)==..string.lower(m)){m=e;break;}}
+			return t[m],t,m;
+		} 
+	}
+	else{
+		if(bool) for(e in t){if(..string.lower(e)==..string.lower(k)){k=e;break;}}
+		return t[k],t,k; 
+	};
+};
+
 /**intellisense(carl.mvc.common)
 proxy(tab) = 设置table对像读写忽略键名大小写,并且键名转为小写,返回新的table对像,如request.get/post 
 fullpath("\") = 等价于io.fullpath函数,增加以".."两点开头格式,比如 "..\" 返回当前网站根目录上一级目录
@@ -195,4 +249,7 @@ saveErrorLog(err,sql) = 保存错误信息，在carlmvc插件调试的错误日�
 printlog() = 打印信息,支持多个参数,仅显示普通table,string,number等类型的值,不显示函数等,在carlmvc插件调试的错误日志可以查看
 error(err,false,code) = 页面输出错误信息,并会记录在日志文件里,第二参数为true表示错误信息可以在非服务器本机上看到,第三参状态码,404错误不记录在日志
 bindModel(tpost,tabModel) = 实体模型映射,tabModel={{key="字段值"; name="字段名"; description = "字段说明";typeof="类型:string/number/datetime/date";default = "默认值";tabValue = {"值1";"值2"}}};
+loadcodeCall() = 执行代码或代码文件,成功返回执行代码返回值组成的table对像,失败还回:null,错误信息,\n参数1:代码或文件路径,参数2:可自定义owner对象,其他参数传给代码
+fullMvcPath() = mvc控制器路径或视图路径转换为绝对路径,\n参数1:控制器路径或视图路径,参数2:控制器或视图相对目录,参数3:后缀名\n参数1路径有三种写法:1.相对于网站根目录,2.相对于控制器目录或视图目录,3.对象路径(default.index)
+getByNamespace = 在指定命名空间内查找空间路径,增加第三个参数,true表示忽略大写小,\n用法与table.getByNamespace一样
 end intellisense**/
