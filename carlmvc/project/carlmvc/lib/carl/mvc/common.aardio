@@ -184,8 +184,8 @@ bindModel = function(tpost,tabModel){
 				return false,"映射字段类型无效";
 			}
 		}
-		if(value && tabValue && !table.find(tabValue,value)){
-			return false,model.name ++ " 指定值'" ++ value ++ "'无效！";
+		if(value && model.tabValue && !table.find(model.tabValue,value)){
+			return false,model.name ++ " 指定值:" ++ value ++ "无效！";
 		}
 		tabNew[key] = value;
 	}
