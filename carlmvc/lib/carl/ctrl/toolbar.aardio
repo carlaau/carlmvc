@@ -13,7 +13,7 @@ class toolbar {
 		this.toolbar = ..win.ui.toolbar(this);
 		this.toolbar.create( style = 0x1000/*_TBSTYLE_LIST*/); // 创建工具条
 		this.toolbar.showLabel = true; //在按钮上显示文字
-		this.toolbar.imageList = ..win.imageList( 16, 16 ).add("/lib/carl/ctrl/.res/toolbar.gif",0xFFFFFF/*透明色*/) ; 
+		this.toolbar.imageList = ..win.imageList( 16, 16 ).add($"~/lib/carl/ctrl/.res/toolbar.gif",0xFFFFFF/*透明色*/) ; 
 		this.toolbar.add();
 	}
 	
@@ -45,7 +45,7 @@ class toolbar {
 	
 	add = function(...){
 		return this.toolbar.add(...); 
-	}	
+	}
 	
 	createButton = function(name,func,num, ...){
 		var t = {...};
