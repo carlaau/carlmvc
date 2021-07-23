@@ -64,8 +64,14 @@ class session{
 
 	read = function(sessionId){
 		var fullpath = this.dir ++ sessionId;
-		var str = load(fullpath);
-		if(!#str) return;
+		if(!io.exist(fullpath)) return ; 
+		var str;
+		for(i=1;10;1){
+			str = load(fullpath);
+			if(#str) break;
+			sleep(100);
+		} 
+		if(!#str) return null,"打开session文件失败";
 		
 		var tSession;
 		try{ tSession = eval(str);}
