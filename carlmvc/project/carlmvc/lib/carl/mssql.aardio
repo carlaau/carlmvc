@@ -128,7 +128,7 @@ mssql = class {
 		END CATCH  
  		*/
  		var str = (type.table == type(tsql)) ? string.join(tsql,'\r\n') : tsql;
- 		if( ... ) str = sqlServer.formatSqlParameters(str, ...);
+ 		if( ... ) str = sqlServer.format(str, ...);
 		sql = string.replace(sql,"@{sql}", str);
 		var tab,err = this.getTable(sql);
 		if(!tab) return null,err;

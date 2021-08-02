@@ -169,14 +169,14 @@ formatSqlParameters = function(dbconfig,sql,...){
 	if( dbconfig.driver == "mysql" ){
 		var connection,err = connect(dbconfig);
 		if(!connection) return null,err;
-		sql = connection.conn.formatSqlParameters(sql,...);
+		sql = connection.conn.format(sql,...);
 		if(!dbconfig.cache){
 			connection.close();
 			connection = null;
 		}
 	}
 	elseif(dbconfig.driver == "mssql"){
-		sql = ..sqlServer.formatSqlParameters(sql,...);
+		sql = ..sqlServer.format(sql,...);
 	}
 	return sql; 
 }
