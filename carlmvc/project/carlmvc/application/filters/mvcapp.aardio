@@ -34,7 +34,7 @@ mvcapp.loadActionBefore = function(controller/*控制器对像*/, controllerPath
 ***/
 
 /**
-mvcapp.loadActionParam = function(tParam/*函数参数组集合*/, actionName/*操作函数名称*/, controllerPath/*控制器路径名*/) { 
+mvcapp.loadActionParam = function(controller/*控制器对像*/, controllerPath/*控制器路径名*/, actionName/*操作函数名称*/, tParam/*函数参数数组集合*/) { 
 	/* 控制器中的函数执行之前,对接收的参数进行预处理,可对tParam数组值操作,拦截,合法性验证等功能, 如果返回false,不会执行后面函数*/
 	
 }
