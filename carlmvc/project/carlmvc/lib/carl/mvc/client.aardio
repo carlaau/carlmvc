@@ -77,14 +77,14 @@ client = class {
 			var param = ..string.lower(t[i]);
 			tParam[i] = ..request.get[param] : ..request.post[param];
 		}
-		this.action(actionName, controllerPath, ..table.unpackArgs(tParam));
+		this.action(actionName, controllerPath, tParam);
 		if(..carl.session.close) ..carl.session.close();
 	}
 
-	action = function(actionName,controllerPath,...){
+	action = function(actionName,controllerPath,tParam){
 		if(!#actionName || !#controllerPath ) return this.errlog("Action Param NULL",404);
 		var controllerFunc,err = this.loadController(controllerPath);
-		if( controllerFunc === false ) return false,err;
+		if( controllerFunc === false ) return this.defaultResponse(false,err);
 		if( !controllerFunc ) return;
 
 		controllerFunc.string = ..string;
@@ -123,13 +123,17 @@ client = class {
 		controller.view.loadViewBefore = this.loadViewBefore;
 		controller.view.loadViewAfter = this.loadViewAfter;
 		controller.view.errlog = this.errlog;
-		
+
+		if(this.loadActionParam){
+			var ok,err = this.loadActionParam(controller, controllerPath, actionName, tParam);
+			if( ok === false ) return this.defaultResponse(false,err);
+		}
 		if( this.loadActionBefore ){
-			var ok,err = this.loadActionBefore(controller, controllerPath, actionName, ...);
-			if( ok === false ) return false,err;
+			var ok,err = this.loadActionBefore(controller, controllerPath, actionName, ..table.unpackArgs(tParam));
+			if( ok === false ) return this.defaultResponse(false,err);
 		}
 		
-		var t = { call(func,controller,...) };
+		var t = { call(func,controller, ..table.unpackArgs(tParam)) };
 		var ok,err = t[1],t[2];
 		if( !ok ){
 			if(#err) err = ..string.format('controller: "%s",action: "%s" Run Error.\r\n' ++ err, controllerFunc.ctlSpace,actionName);
@@ -246,8 +250,12 @@ loadControllerAfter = @.loadControllerAfter = function(controller/*控制器对�
 	/*控制器加载之后,触发此事件,如果返回false,不会执行控制器内的函数*/
 	__
 }
-loadActionBefore = @.loadActionBefore = function(controller/*控制器对像*/, controllerPath/*控制器路径名*/, actionName/*操作函数名称*/){
+loadActionBefore = @.loadActionBefore = function(controller/*控制器对像*/, controllerPath/*控制器路径名*/, actionName/*操作函数名称*/, .../*函数参数*/){
 	/*控制器中的函数执行之前,触发此事件,如果返回false,不会执行函数*/
+	__
+}
+loadActionParam = @.loadActionParam = function(controller/*控制器对像*/, controllerPath/*控制器路径名*/, actionName/*操作函数名称*/, tParam/*函数参数数组集合*/) { 
+	/* 控制器中的函数执行之前,对接收的参数进行预处理,可对tParam数组值操作,拦截,合法性验证等功能, 如果返回false,不会执行后面函数*/
 	__
 }
 loadActionAfter = @.loadActionAfter = function(controller/*控制器对像*/, controllerPath/*控制器路径名*/, actionName/*操作函数名称*/, .../*函数返回值*/ ) { 
