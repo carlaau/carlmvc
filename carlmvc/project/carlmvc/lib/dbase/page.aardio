@@ -6,34 +6,46 @@ namespace dbase.page
 string = ..string;
 table = ..table;
 
-getWhereSql = function(tabRules){
-	var where = "";
+getWhereSql = function(tabRules,dbconfig){
+	var where,err = "";
 	for(i,t in tabRules){//{field: "BrandName", op: "eq", data: "1"}
 		if(type(t) != type.table) return false,"不是有效where条件"; 
-		var data = string.trim(t.data:"");
-		data = string.replace(data,"'","''");		
-		if(!#t.field || t.field == "search" || !#data || string.find(t.field,"\p")) continue ;
-		var prefix = #t.prefix ? (t.prefix ++ ".") : "";//前缀	
-		var fieldName = prefix ++ t.field;
+		var data = t.data;
+		var field = t.field;
+		if(!#field || field == "search" || data === null || string.find(field,"\p")) continue ;
+		var prefix = #t.prefix ? (t.prefix ++ ".") : "";//前缀		
+		field = prefix ++ field;
+		
+		field,err = ..dbase.escapeId(dbconfig,field);
+		if(!field) return false,err; 
+		data,err = ..dbase.escape(dbconfig,data);
+		if(!data) return false,err;
+		
 		if(t.op == "eq" || !#t.op){
-			where += " and " ++ fieldName ++ "='" ++ data ++ "'";//相等
+			where += " and " ++ field ++ "=" ++ data;//相等
 		}
 		elseif(t.op == "cn"){
-			where += " and " ++ fieldName ++ " like '%" ++ data ++ "%'";
+			data = string.trim(data,"'");
+			where += " and " ++ field ++ " like '%" ++ data ++ "%'";
 		}
 		elseif(t.op == "ne"){
-			where += " and " ++ fieldName ++ "!='" ++ data ++ "'";//不等于
+			where += " and " ++ field ++ "!=" ++ data;//不等于
 		}
 		elseif(t.op == "bw"){
 			var date1 = string.match(t.data:"","(\d+\-\d+\-\d+)");
 			var date2 = string.match(t.extradata:"","(\d+\-\d+\-\d+)");
 			if(date1 && date2){
 				date2 += " 23:59:59";
-				where += " and " ++ fieldName ++ " between '" ++ date1 ++ "' and '" ++ date2 ++ "'";
+				where += " and " ++ field ++ " between '" ++ date1 ++ "' and '" ++ date2 ++ "'";
 			}
 		}
 		elseif(t.op == "in"){
-			where += " and " ++ fieldName ++ " in(" ++ data ++ ")";
+			data = string.replace(t.data,'\r\n',",");
+			data = string.replace(data,"，",",");
+			var tab = string.split(data,",");
+			data,err = ..dbase.escape(dbconfig,tab);
+			if(!data) return false,err;
+			where += " and " ++ field ++ " in(" ++ data ++ ")";
 		}
 	}
 	return where; 
@@ -43,7 +55,7 @@ getPageList = function(tabPage,mainSql,orderby,where,dbconfig){
 	var wheresql = "where ";
 	wheresql += #where ? where : "1=1";
 	var tabRules = tabPage[["filters"]][["rules"]];
-	var str,err = getWhereSql(tabRules);
+	var str,err = getWhereSql(tabRules,dbconfig);
 	if(!str) return null,err;
 	
 	wheresql += str;
@@ -51,20 +63,31 @@ getPageList = function(tabPage,mainSql,orderby,where,dbconfig){
 	var pageSize = tabPage.rows : 20;
 	var driver = dbconfig.driver;
 	var sql;
-	if(driver == "mysql" || driver == "sqlite"){
-		sql = ..carl.sql.my.getPageSql(mainSql + " " + wheresql, currentPage, pageSize, orderby);
-	}
-	elseif(driver == "mssql"){
-		sql = ..carl.sql.ms.getPageSql(mainSql + " " + wheresql, currentPage, pageSize, orderby);
+	if(tabPage.isPage === false){//不使用分页
+		sql = string.concat(mainSql," ",wheresql);
+		if(#orderby) sql = string.concat(sql," order by ",orderby);
 	}
 	else {
-		return null,"请指定分页查询数据库类型dbconfig"; 
+		if(driver == "mysql" || driver == "sqlite"){
+			sql = ..carl.sql.my.getPageSql(mainSql + " " + wheresql, currentPage, pageSize, orderby);
+		}
+		elseif(driver == "mssql"){
+			sql = ..carl.sql.ms.getPageSql(mainSql + " " + wheresql, currentPage, pageSize, orderby);
+		}
+		else {
+			return null,"请指定分页查询数据库类型dbconfig"; 
+		}
 	}
 	var tab,err = ..dbase.getTable(dbconfig,sql);
 	if(tab){
-		var tabReslut = {}
-		tabReslut["total"] = #tab ? tab[1]["rowCount"] : #tab;
-		tabReslut["rows"] = tab;
+		var tabReslut = {};
+		if(tabPage.isPage === false){
+			tabReslut.total = #tab;
+		}
+		else {
+			tabReslut.total = #tab ? tab[1]["rowCount"] : #tab;
+		}
+		tabReslut.rows = tab;
 		return tabReslut;
 	}else {
 		return null,err,sql; 

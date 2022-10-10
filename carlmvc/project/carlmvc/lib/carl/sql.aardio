@@ -152,3 +152,18 @@ namespace my{
     	return mysql;
 	};
 }
+
+/**intellisense(carl.sql)
+ms = SQL语句操作库sqlServer(mssql)
+my = SQL语句操作库(mysql)
+end intellisense**/
+
+/**intellisense(carl.sql.ms)
+getInsertSql("表名", tab) = 返回新增SQL语句\n参数:表名,table对像 格式:{字段1="值1";字段2="值2"}
+getUpdateSql("表名",tab,where) = 返回更新SQL语句
+end intellisense**/
+
+/**intellisense(carl.sql.my)
+getInsertSql("表名", tab) = 返回新增SQL语句\n参数:表名,table对像 格式:{字段1="值1";字段2="值2"}
+getUpdateSql("表名",tab,where) = 返回更新SQL语句
+end intellisense**/

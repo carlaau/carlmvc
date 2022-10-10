@@ -1,5 +1,5 @@
 
-/*捕获错误信息{{*/
+/*捕获内部错误{{*/
 global.onError = function( err,over,app ){ 
     if(!over){
         import debug;
@@ -7,11 +7,13 @@ global.onError = function( err,over,app ){
         err =  ..string.concat(err,'\n',stack);
     }
     
-    //错误信息请查看"CGI.EXE目录/config"下面生成的日志文件
+    /*
+    CGI.EXE 内部错误可请查看"CGI.EXE目录/config"下面生成的日志文件。网页代码发生500内部错误，
+    可查看"网站目录/config"下面生成的日志文件,使用localhost绑定并访问要测试的网站也可以查看500错误的详细信息。
+    */
     import fsys.log;
     fsys.log.print( err );
     
-    //500错误错误服务器上本地打开网页可以看到,
     return err;
 } 
 /*}}*/ 
@@ -22,6 +24,12 @@ import fsys.log;
 
 //创建CGI客户端(用于处理Web服务器请求)
 var fcgiClient = fastcgi.client();
+
+//当前不是通过 FastCGI 启动
+if( !fcgiClient.getStream() ){
+	import fastcgi.iisInstall;
+	return;
+}
 
 //启动CGI客户端
 fcgiClient.run(
@@ -34,7 +42,7 @@ fcgiClient.run(
 FastCGI安装配置说明
 -------------------------------------
 此程序应先生成EXE文件、并在web服务器上注册为fastcgi模块才能使用，
-以 win2008 ,IIS7为例(网上教程很多，请自行查找详细教程)
+以 WIN2008,IIS7为例(网上教程很多，请自行查找详细教程)
 
 1、桌面右键点【计算机】，弹出菜单中点【管理】，【添加角色/添加IIS】
 
@@ -49,18 +57,21 @@ FastCGI安装配置说明
 添加IUSR,IIS_USER用户组权限,允许读取和执行、列出目录、读取、写入权限。
 
 5、如果是64位系统，请在应用程序池属性中设置"启用32位的应用程序"为True
+
+IIS 只要使用 win-acme（不支持 WIN 2008） 就可以开通免费HTTPS，
+可自动续期，操作很简单请自行搜索教程。
 */
 
 /*
 FastCGI开发常见问题:
 -------------------------------------
-1、如果用新版aardio编写的代码，在旧版编译的CGI.EXE中运行报错，那么把旧版CGI.EXE重新编译一次就可以。
+1、如果用新版 aardio 编写的代码，在旧版编译的CGI.EXE中运行报错，那么把旧版CGI.EXE重新编译一次就可以。
 
 2、import导入的库，在一个进程中只会加载一次, 如果网站引用了修改的库，应当杀除CGI.EXE进程重启动，如果在服务器上编译CGI.EXE，此工程会在发布后自动执行此操作。工程内的发布前触发器,\.build\default.init.aardio 会在每次发布前停止已运行的CGI进程，这个操作需要管理权限如果在本机上安装IIS测试，本机测试建议以管理权限启动aardio开发环境
 
 3、如果是64位系统，请在应用程序池属性中设置"启用32位的应用程序"为True
 
-4、如果在开发中遇到任何错误，通过远程桌面登录后在服务器上本地直接打开网页，可以看到500错误的详细信息，CGI内部错误可请查看"CGI.EXE目录/config"下面生成的日志文件。
+4、CGI.EXE 内部错误可请查看"CGI.EXE目录/config"下面生成的日志文件。网页代码发生500内部错误，可查看"网站目录/config"下面生成的日志文件。使用localhost绑定并访问要测试的网站也可以查看500错误的详细信息。
 
 5、注意在编写网站时，有必要请输出日志文件来排查错误。
 */

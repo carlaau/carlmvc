@@ -1,0 +1,106 @@
+
+namespace string{
+	
+    isNull = function(str){
+    	if(str === null) return true;
+    	if(type.string == type(str)){
+    		if(!#str) return true;
+    	}
+    	elseif(type.number == type(str) || type.boolean == type(str)){
+    		if(!str) return true; 
+    	}
+    	elseif(type.table == type(str)){
+    		if(!..table.count(str)) return true; 
+    	}
+    	return false; 
+	}
+	
+	isNumber = function(num){
+		if(type(num) == type.number) return true;
+		if(type(num) == type.string){
+			var n,len = tonumber(num);
+			if(len == #num) return true; 	
+		}
+		return false; 
+	}
+}
+
+namespace carl.string
+
+string = ..string;
+table = ..table;
+
+/*intellisense(carl.string)*/
+
+//返回字符串中节点对像内的字符，类似于 wb.getEle("id").outerHTML
+outerHTML = function(html,patten){
+	var getEleHtml,getTagName;
+	
+	getTagName=function(patten,html){			//	
+		for tagstr in string.gmatch(html,"(\<\a+?\s.*?\>)") {
+			if(string.find(tagstr,"@=" + patten) 
+				or string.find(tagstr,'@="' + patten + '"') 
+				or string.find(tagstr,"@='" + patten + "'")
+				or string.find(tagstr,"@" + patten)
+				or string.find(tagstr,patten)){
+				var tagname = string.match(tagstr,"\<(\a+)")
+				if(tagname){								//得到tag标签名
+					var i = string.find(html,"@" + tagstr);
+					var htmlstr = string.sub(html,i,#html)
+					return tagname,htmlstr;
+				}
+			}
+		}
+	}
+	
+	getEleHtml=function(tagname,pattenstr,html){	//得到节点内容
+		var str=string.match(html,"(" + pattenstr + ")");
+		if(str){
+			var i=0;var j=0;
+			for n1 in string.gmatch( str,"(\<" + tagname + ")") { 
+				i++;
+			} 
+			for n1 in string.gmatch( str,"(\</" + tagname + "\>)") { 
+				j++;
+			}
+			if(i==j){
+				var n,m=string.find(html,pattenstr);
+				html=string.sub(html,m,#html); 
+				return str,html; 
+			}
+			else {
+				pattenstr += ".*?\</" + tagname + "\>";
+				return getEleHtml(tagname,pattenstr,html); 
+			}
+		}
+	}	
+	//返回所有符合的结果table对像
+	var tab={};
+	var outerhtml,pattenstr,tagname;
+	while(html){
+		tagname,html = getTagName(patten,html)
+		if(tagname and html){
+			pattenstr="\<" + tagname + ".*?\</" + tagname + "\>";
+			outerhtml,html = getEleHtml(tagname,pattenstr,html);
+			if(outerhtml)	table.push(tab,outerhtml);
+		}
+	}
+	if(#tab)	return tab[1],tab;
+};
+
+findCount = function(str, pattern){//查找字符串出现次数
+	var count = 0;
+	var rep = function(){
+		count++;
+	}
+	string.replace(str,pattern,rep)
+	return count; 
+}
+
+
+/*end intellisense*/
+
+/**intellisense()
+string.isNull(__) = 判断值是否为空,\n返回值:为空返回true,不为空返回false,\n支持:字符串,数字,布尔值,table表对像\n数字0和{}空对像,都是做为空处理返回true\n此函数需先导入carl.string库
+string.isNumber(__) = 判断值是否为数字\n此函数需先导入carl.string库
+end intellisense**/

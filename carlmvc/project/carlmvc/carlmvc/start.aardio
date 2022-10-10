@@ -20,6 +20,7 @@ import carl.mssql;
 import carl.mysql;
 import carl.oracle;
 import carl.sql;
+import carl.table;
 import dbase;
 
 printlog = carl.mvc.common.printlog;

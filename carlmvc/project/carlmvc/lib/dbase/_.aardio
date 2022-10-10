@@ -40,7 +40,7 @@ connect = function(dbconfig){
 exec = function(dbconfig, sql, ... ){
 	var connection,err = connect(dbconfig);
 	if(!connection) return null,err;
-	if( ... !== null ) sql = formatSqlParameters(dbconfig, sql, ...);
+	if( ... !== null ) sql = format(dbconfig, sql, ...);
 	var bool,sqlerr = sqlBefore(sql)
 	if( bool === false) return false,sqlerr;
 	var ok,err = connection.exec( sql );
@@ -64,7 +64,7 @@ exec = function(dbconfig, sql, ... ){
 getTable = function(dbconfig, sql, ... ){
 	var connection,err = connect(dbconfig);
 	if(!connection) return null,err;
-	if( ... !== null ) sql = formatSqlParameters(dbconfig, sql, ...);
+	if( ... !== null ) sql = format(dbconfig, sql, ...);
 	var bool,sqlerr = sqlBefore(sql)
 	if( bool === false) return false,sqlerr;
 	var t,err = connection.getTable( sql );
@@ -79,7 +79,7 @@ getTable = function(dbconfig, sql, ... ){
 getTableFirst = function(dbconfig, sql, ... ){
 	var connection,err = connect(dbconfig);
 	if(!connection) return null,err;
-	if( ... !== null ) sql = formatSqlParameters(dbconfig, sql, ...);
+	if( ... !== null ) sql = format(dbconfig, sql, ...);
 	var bool,sqlerr = sqlBefore(sql)
 	if( bool === false) return false,sqlerr;
 	var t,err = connection.getTableFirst( sql );
@@ -97,7 +97,7 @@ getTables = function(dbconfig, tsql, ... ){//执行多个select语句,参数tabl
 	var tab,err,sql = {};
 	for(i=1;#tsql;1){
 		sql = tsql[i];
-		if( ... ) sql = formatSqlParameters(dbconfig, sql, ...);
+		if( ... ) sql = format(dbconfig, sql, ...);
 		var bool,sqlerr = sqlBefore(sql)
 		if( bool === false) return false,sqlerr;
 		var t,e = connection.getTable(sql);
@@ -120,7 +120,7 @@ transaction = function(dbconfig, tsql, ... ){//事务执行，参数table对像
 	var connection,err = connect(dbconfig);
 	if(!connection) return null,err;
 	var sql = (type.table == type(tsql)) ? ..string.join(tsql,';\r\n') : tsql;
-	if( ... ) sql = formatSqlParameters(dbconfig, sql, ...);
+	if( ... ) sql = format(dbconfig, sql, ...);
 	var bool,sqlerr = sqlBefore(sql)
 	if( bool === false) return false,sqlerr;
 	var ok,err = connection.transaction( tsql );
@@ -165,19 +165,55 @@ getUpdateSql = function(driver,tabname, tab, where){
 	}
 }
 
-formatSqlParameters = function(dbconfig,sql,...){
+format = function(dbconfig,sql,...){
 	if( dbconfig.driver == "mysql" ){
 		var connection,err = connect(dbconfig);
 		if(!connection) return null,err;
 		sql = connection.conn.format(sql,...);
-		if(!dbconfig.cache){
-			connection.close();
-			connection = null;
-		}
 	}
 	elseif(dbconfig.driver == "mssql"){
 		sql = ..sqlServer.format(sql,...);
 	}
+	return sql; 
+}
+
+escapeId = function(dbconfig,Id){
+	if( dbconfig.driver == "mysql" ){
+		var connection,err = connect(dbconfig);
+		if(!connection) return null,err;
+		return connection.conn.escapeId(Id);
+	}
+	elseif(dbconfig.driver == "mssql"){				
+		return ..sqlServer.escapeId(Id);
+	}
+}
+
+escape = function(dbconfig,v,nested){
+	if( dbconfig.driver == "mysql" ){
+		var connection,err = connect(dbconfig);
+		if(!connection) return null,err;
+		return connection.conn.escape(v,nested);
+	}
+	elseif(dbconfig.driver == "mssql"){				
+		return ..sqlServer.escape(v,nested);
+	}
+}
+
+getSelectSql = function(dbconfig,tableName,tabWhere,sortField,desc){
+	var where = "";
+	if(type(tabWhere) == type.table){ 
+		if(..table.count(tabWhere)){			
+			where,err = escapeId(dbconfig,tabWhere);
+			if(!where) return null,err; 
+		}
+	}
+	else {
+		where = tabWhere;
+	}
+	var sql = "select * from " ++ tableName;
+	if(#where) sql +=" where " ++ where;
+	if(#sortField) sql += " order by " ++ sortField;
+	if(desc) sql += " desc";
 	return sql; 
 }
 
@@ -186,3 +222,5 @@ sqlBefore = function(sql){
 	if( ..config[["webconfig"]][["printSql"]] )
 		..printlog("sqlBefore>>",sql);
 }
+
+formatSqlParameters = format;

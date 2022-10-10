@@ -93,12 +93,12 @@ base = class {
 		}
 		var tabSave,err = this.getFields(tab,tabName);
 		if(!tabSave) return null,err; 
-		if(tabwhere) where = this.formatSqlParameters(where,tabwhere);
+		if(tabwhere) where = this.format(where,tabwhere);
 		return this.database.getUpdateSql(this.dbconfig.driver, tabName, tabSave, where);
 	}
 	
-	formatSqlParameters = function(sql, ...){//格式化sql
-		return this.database.formatSqlParameters(this.dbconfig, sql, ...);
+	format = function(sql, ...){//格式化sql
+		return this.database.format(this.dbconfig, sql, ...);
 	}
 
 	getFields = function(tabSave, tabName){
@@ -183,7 +183,7 @@ base = class {
 		if( !#this.tableName ) return null,"请指定表名";
 		if(!#where) return null,"无where条件";
 		var sql = "delete from " + this.tableName + " where " ++ where;
-		sql = this.formatSqlParameters(sql, ...);
+		sql = this.format(sql, ...);
 		return this.exec(sql);
 	}
 
@@ -191,7 +191,7 @@ base = class {
 		if( !#this.tableName ) return null,"请指定表名";
 		if(!#where) return null,"无where条件";
 		var sql = "select * from " ++ this.tableName ++ " where " ++ where;
-		sql = this.formatSqlParameters(sql, ...);
+		sql = this.format(sql, ...);
 		return this.getTableFirst(sql);
 	}
 	
@@ -199,14 +199,26 @@ base = class {
 		if( !#this.tableName ) return null,"请指定表名";
 		if(!#where) return null,"无where条件";
 		var sql = "select * from " ++ this.tableName ++ " where " ++ where;
-		sql = this.formatSqlParameters(sql, ...);
+		sql = this.format(sql, ...);
 		return this.getTable(sql);
 	}
 	
 	getPageList = function(tabPage,mainSql,orderby,where){//分页查询
 		return this.errorlog( ..dbase.page.getPageList(tabPage,mainSql,orderby,where,this.dbconfig) );
 	}
+
+	getFirst = function(tableName,tabWhere,sortField,desc){		
+		var sql,err = this.database.getSelectSql(this.dbconfig,tableName,tabWhere,sortField,desc);
+		if(!sql) return null,err; 
+		return this.getTableFirst(sql);
+	}
 	
+	getList = function(tableName,tabWhere,sortField,desc){
+		var sql,err = this.database.getSelectSql(this.dbconfig,tableName,tabWhere,sortField,desc);
+		if(!sql) return null,err; 
+		return this.getTable(sql);
+	}
+
 	errorlog = function(tab,err,sql){
 		if( ..config.webconfig.dbErrorLog && !tab ){
 			..carl.mvc.common.saveErrorLog(err,sql);
@@ -214,6 +226,7 @@ base = class {
 		return tab,err,sql; 
 	}
 	
+	formatSqlParameters = this.format;
 }
 
 namespace base{
@@ -234,7 +247,7 @@ dbase.base() = !dbaseBase.
 !dbaseBase.storedProcedures(name,"其他参数") = 执行存储过程,参数1:存储过程名称,参数2以后,是传存储过程函数参数
 !dbaseBase.getInsertSql("表名", tab) = 返回新增SQL语句\n参数:表名,table对像 格式:{字段1="值1";字段2="值2"}
 !dbaseBase.getUpdateSql("表名", tab, where, 格式化参数table) = 返回更新SQL语句\n参数:表名, table对像,where条件,格式化参数table\n参数四 可省略\n参数二格式:{字段1="值1";字段2="值2"}\n格式化参数是一个table表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
-!dbaseBase.formatSqlParameters(sql,格式化参数) = 格式化sql\n参数:sql语句,格式化参数\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
+!dbaseBase.format(sql,格式化参数) = 格式化sql\n参数:sql语句,格式化参数\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.getPageList(tabPage,mainSql,orderby,where) = 分页查询,参数:分页条件table对像,主SQL,排序SQL语句,where条件\n具体用法请查看dbase.page分页库\n成功返回分页table记录集,失败返回null,err,sql
 !dbaseBase.getAutoId("表名") = 获取指定表主键ID值,\n需自己实现sp_get_auto_id存储过程
 !dbaseBase.getSystemNo(ex,4,tableName,isDate) = 生成系统自增编码\n参数:编码前缀,至少保留几位数字,标识符,是否按日期\n需自己实现sp_get_auto_id存储过程
@@ -250,5 +263,7 @@ dbase.base() = !dbaseBase.
 !dbaseBase.getFirstList(where, 格式化参数) = 操作当前表\n成功返回where条件查询结果的第一条记录,失败返回null,err,sql\n参数:where条件,格式化参数\n参数二 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.getAllList(where, 格式化参数) = 操作当前表\n成功返回where条件所有查询结果记录集,失败返回null,err,sql\n参数:where条件,格式化参数\n参数二 可省略\n格式化参数与string.format用法兼容,\n格式化参数也可以是一个表参数,用于替换sql中的命名参数,\nsql中用@前缀标明命名参数,命名参数自动过滤所有转义符
 !dbaseBase.getSystemNo(ex,4) = 按日期生成当前表自增编码\n参数:编码前缀,至少保留几位数字,\n需自己实现sp_get_auto_id存储过程
+!dbaseBase.getFirst(tableName,tabWhere,sortField,desc) = 返回查询结果的第一条记录,\n除第一个参数表名外，其他参数都可省略\ntableName参数一:表名\ntabWhere参数二:查询条件,可传格式化参数table={字段1="值1";字段2="值2"}或传条件字符串\nsortField参数三:排序字段\ndesc参数四:是否降序,默认升序
+!dbaseBase.getList(tableName,tabWhere,sortField,desc) = 返回查询结果记录集,\n除第一个参数表名外，其他参数都可省略\ntableName参数一:表名\ntabWhere参数二:查询条件,可传格式化参数table={字段1="值1";字段2="值2"}或传条件字符串\nsortField参数三:排序字段\ndesc参数四:是否降序,默认升序
 <-table end->
 end intellisense**/

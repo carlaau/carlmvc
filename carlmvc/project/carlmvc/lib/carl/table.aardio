@@ -1,0 +1,176 @@
+﻿//table 数据表处理
+
+import string.conv.pinyin;
+import carl.string;
+
+namespace carl.table{
+
+	string = ..string;
+	table = ..table;
+
+	where = function(tab,twhere,first){
+		var tre = {};
+		var f;
+		if(type.function == type(twhere)){
+			f = twhere;
+		}
+		else {
+			if(type.table != type(twhere) || table.count(twhere) == 0) return tre;
+			f = function(row){
+				var bool = true;
+				for(k,v in twhere){
+					bool = (row[k] == v);
+					if(!bool) break;
+				}
+				return bool; 
+			}
+		}
+		for(i=1;#tab;1){
+			var row = tab[i];
+			if(f(row)){
+				table.push(tre,row);
+				if(first) return tre,i;
+			}
+		}
+		return tre; 
+	}
+	
+	first = function(tab,twhere){
+		var t,ind = where(tab,twhere,true);
+		if(ind) return t[1],ind; 
+	}
+	
+	groupBy = function(tab,field,fieldtext){
+		if(..string.isNull(field)) return null,"field列名不能为空";
+		
+		var tok,tfield = {},{};
+		for(i=1;#tab;1){
+			var row = tab[i];
+			var value = row[field];
+			if(value === null) value = "";
+			var text;
+			if(#fieldtext){
+				text = row[fieldtext];
+			}
+			else {
+				text = value;
+			}			
+			var k = table.find(tfield,value);
+			if(!k) k = table.push(tfield,value);
+			tok[k] := { key = value,text = text };
+			table.push(tok[k],row);
+		}
+		return tok; 
+	}
+	
+	eachGroupBy = function(tab,field,fieldtext){
+		var tabList,err = groupBy(tab,field,fieldtext);
+		if(!tabList) return null,err;
+		
+		var len = #tabList;
+    	return function (i) { 
+    	    i++;
+    	    if(i<=len){
+				var list = tabList[i];
+				return i,list.key,list.text,list,len;
+			}
+    	},,0
+	}
+	
+	swap = function(tab,ind,num,field){
+		ind := 1;
+		num := 1; 
+		var sInd = ind + num;
+		if(num > 0){//下移
+			if(ind >= #tab || ind <= 0) return ;
+			sInd = sInd>#tab ? #tab : sInd;
+		}
+		else {//上移
+			if(ind <= 1 || ind > #tab) return;
+			sInd = sInd<=0 ? 1 : sInd;
+		}				
+		var row = table.clone(tab[ind]);
+		var swap = table.clone(tab[sInd]);
+		if(#field){
+			var value = row[field];
+			row[field] = swap[field];
+			swap[field] = value;
+		}
+		tab[ind] = swap;
+		tab[sInd] = row;
+	}
+	
+	orderBy = function(tab,field,asc = true,flag){
+		var tre = {};
+		var tvalue = ..carl.table.select(tab,field);
+		var f = function(a,b){
+			if(type(a) == type.number && type(b) == type.number) return asc ? a<b : a>b;
+
+			a = string.str(a:"");
+			b = string.str(b:"");
+			if(flag){
+				var a1,la = tonumber(a);
+				var b1,lb = tonumber(b);
+				if(la == #a && lb == #b) return asc ? a1<b1 : a1>b1;
+			}
+			if(string.find(a,":") && string.find(b,":")){
+				a = ..string.conv.pinyin(a,"");
+			 	b = ..string.conv.pinyin(b,"");
+			}
+			if(asc){
+				return string.cmp(a,b)<0;
+			}
+			else {
+				return string.cmp(a,b)>0;
+			}
+		}		
+		for i,v in table.eachValue(tvalue,f){
+			var tw = where(tab, lambda(r) (r[field] == v || (r[field] === null && v == "")));
+			table.push(tre,table.unpack(tw));
+		}
+		return tre;
+	}
+	
+	sum = function(tab,field,func){
+		var list = func ? where(tab, func) : tab;
+		var count = 0;
+		table.filter(list,function(row,i){
+			count += (tonumber(row[field]):0)
+		});
+		return count; 
+	}
+	
+}
+
+carl.table.select = function(tab,field){
+	var t = {};
+	for(i=1;#tab;1){
+		var row = tab[i];
+		var v = row[field];
+		if(v === null) v = "";
+		if(!table.find(t,v)) table.push(t,v);
+	}
+	return t; 
+}
+
+/**intellisense()
+carl.table = 数据表处理,由列名和列值组成的键值对,\n使用sqlite,access,sqlServer,mysql等数据库对象提供的getTable函数可获取符合此规格的数据表
+end intellisense**/
+
+/**intellisense(carl.table)
+groupBy(tab,"field","fieldtext"); = 按第二个参数指定field列名分组,\n参数二:分组列名字段;\n参数三:说明字段(非必填,参数二的说明字段),\n返回数组{ {key="分组列值1";text="说明字段内容1";{};{}};{key="分组列值2";text="说明字段内容2";{};{}} },\n可使用#操作符检测分组个数
+where(tab,twhere); = 查找field列名和值一样的所有数组集合,twhere={k1=v1;k2=v2},\n无满足返回空数组{}
+where(tab,回调函数); = @.where(tab, lambda(r)r.__/*查找回调函数返回true所有数组集合,\n参数二:回调函数用lambda(r)表达式,回调函数参数r是行对像,\n无满足返回空数组{}*/);
+first(tab,twhere); = 查找field列名和值一样的第一个数组,twhere={k1=v1;k2=v2},\n返回两个值:返回值一:第一个数组,返回值二:第几行索引\n无满足返回空值null
+first(tab,回调函数); = @.first(tab, lambda(r)r.__/*查找回调函数返回true的第一个数组,\n参数二:回调函数用lambda(r)表达式,回调函数参数r是行对像,\n返回两个值:返回值一:第一个数组,返回值二:第几行索引\n无满足返回空值null*/);
+select(tab,"field"); = 返回指定field列值的一维数组并去重(NULL值用空字符串表示)
+eachGroupBy(tab,"field","fieldtext") = @for(i,key,text,list,count in ??.eachGroupBy(tab,"field","fieldtext") ){
+	__/*遍历分组(按第二个参数指定field列名分组),\n参数二field:分组列名字段,\n参数三fieldtext:说明字段(非必填,参数二的说明字段),\n返回值:\ni=第几个分组,\nkey=分组列值,\ntext=说明字段内容,\nlist=分组对像table,\ncount=分组总数*/
+	io.print( i,key,text,list,count ) 
+}
+swap(tab); = 第一行向下移动一行(第一行与第二行互换),直接修改参数本身,无返回值
+swap(tab,ind,num,field); = 上下两行互换位置(上移或下移),\n参数二ind:要移动的行索引,\n参数三num:大于0向下移动,小于0向上移动,\n参数四field:需要互换值的列名(非必填),\n直接修改参数本身,无返回值
+orderBy(tab,field,true); = 按指定列值排序,返回新数组,不改变原来数组\n中文将转换为拼音排序\n参数二:field列名字段,\n参数三:默认true升序,false降序,\n参数四:字符串是否强制转换为数字排序,默认flase
+sum(tab,"field"); = 按参数一数组集合,指定列名相加求和
+sum(tab,"field",回调函数); = @.sum(tab,"field",lambda(r)r.__/*从查找后的数组集合,指定列名相加求和,\n参数一:数组集合,\n参数二:列名,\n参数三:回调函数用lambda(r)表达式,回调函数参数r是行对像*/)
+end intellisense**/
